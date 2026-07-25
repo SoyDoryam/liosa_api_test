@@ -1,9 +1,5 @@
-import PdfPrinter from "pdfmake";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const PdfPrinter = require("pdfmake");
+const path = require("path");
 
 const fonts = {
     Roboto: {
@@ -16,14 +12,13 @@ const fonts = {
 
 const printer = new PdfPrinter(fonts);
 
-/**
- * Genera un documento PDFKit a partir de la definición de pdfmake.
- */
-export const generateReport = (docDefinition) => {
+const createPrinter = () => printer;
+
+const generateReport = (docDefinition) => {
     return printer.createPdfKitDocument(docDefinition);
 };
 
-export const buildTableDefinition = (body, widths = ["*"]) => ({
+const buildTableDefinition = (body, widths = ["*"]) => ({
     table: {
         headerRows: 1,
         widths,
@@ -32,7 +27,7 @@ export const buildTableDefinition = (body, widths = ["*"]) => ({
     layout: "lightHorizontalLines",
 });
 
-export const getReportHeader = (title, subtitle = "") => [
+const getReportHeader = (title, subtitle = "") => [
     {
         text: title,
         style: "header",
@@ -51,7 +46,16 @@ export const getReportHeader = (title, subtitle = "") => [
     },
 ];
 
-export default {
+const sendPdfResponse = (response, pdfDoc, filename) => {
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", `inline; filename=${filename}`);
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+};
+
+module.exports = {
+    createPrinter,
+    sendPdfResponse,
     generateReport,
     buildTableDefinition,
     getReportHeader,
