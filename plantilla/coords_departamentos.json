@@ -3,138 +3,138 @@
     {
       "id": "DEPARTAMENTO_MANAGUA",
       "nombre": "Managua",
-      "x": 490,
-      "y": 710,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 330,
+      "y": 780,
+      "color_letra": "#FFF",
+      "tamano_fuente": 25
     },
     {
       "id": "DEPARTAMENTO_CHINANDEGA",
       "nombre": "Chinandega",
-      "x": 60,
-      "y": 600,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 150,
+      "y": 570,
+      "color_letra": "#FFF",
+      "tamano_fuente": 35
     },
     {
       "id": "DEPARTAMENTO_LEON",
       "nombre": "León",
-      "x": 85,
+      "x": 270,
       "y": 655,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "color_letra": "#FFF",
+      "tamano_fuente": 40
     },
     {
       "id": "DEPARTAMENTO_MASAYA",
       "nombre": "Masaya",
-      "x": 430,
-      "y": 760,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 410,
+      "y": 790,
+      "color_letra": "#FFF",
+      "tamano_fuente": 15
     },
     {
       "id": "DEPARTAMENTO_GRANADA",
       "nombre": "Granada",
-      "x": 420,
+      "x": 450,
       "y": 820,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "color_letra": "#FFF",
+      "tamano_fuente": 15
     },
     {
       "id": "DEPARTAMENTO_CARAZO",
       "nombre": "Carazo",
-      "x": 455,
-      "y": 830,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 370,
+      "y": 850,
+      "color_letra": "#FFF",
+      "tamano_fuente": 25
     },
     {
       "id": "DEPARTAMENTO_RIVAS",
       "nombre": "Rivas",
-      "x": 430,
-      "y": 965,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 450,
+      "y": 920,
+      "color_letra": "#FFF",
+      "tamano_fuente": 26
     },
     {
       "id": "DEPARTAMENTO_ESTELI",
       "nombre": "Estelí",
-      "x": 220,
-      "y": 620,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 320,
+      "y": 480,
+      "color_letra": "#FFF",
+      "tamano_fuente": 35
     },
     {
       "id": "DEPARTAMENTO_MATAGALPA",
       "nombre": "Matagalpa",
-      "x": 325,
-      "y": 650,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 520,
+      "y": 570,
+      "color_letra": "#FFF",
+      "tamano_fuente": 40
     },
     {
       "id": "DEPARTAMENTO_JINOTEGA",
       "nombre": "Jinotega",
-      "x": 280,
-      "y": 540,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 600,
+      "y": 300,
+      "color_letra": "#FFF",
+      "tamano_fuente": 40
     },
     {
       "id": "DEPARTAMENTO_NUEVA_SEGOVIA",
       "nombre": "Nva. Segovia",
-      "x": 200,
-      "y": 320,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 370,
+      "y": 350,
+      "color_letra": "#FFF",
+      "tamano_fuente": 35
     },
     {
       "id": "DEPARTAMENTO_MADRIZ",
       "nombre": "Madriz",
-      "x": 150,
-      "y": 380,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 330,
+      "y": 400,
+      "color_letra": "#FFF",
+      "tamano_fuente": 30
     },
     {
       "id": "DEPARTAMENTO_CHONTALES",
       "nombre": "Chontales",
-      "x": 545,
-      "y": 705,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 650,
+      "y": 760,
+      "color_letra": "#FFF",
+      "tamano_fuente": 40
     },
     {
       "id": "DEPARTAMENTO_BOACO",
       "nombre": "Boaco",
-      "x": 520,
-      "y": 650,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 560,
+      "y": 670,
+      "color_letra": "#FFF",
+      "tamano_fuente": 50
     },
     {
       "id": "DEPARTAMENTO_RIO_SAN_JUAN",
       "nombre": "Río San Juan",
-      "x": 560,
-      "y": 985,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 830,
+      "y": 1000,
+      "color_letra": "#FFF",
+      "tamano_fuente": 23
     },
     {
       "id": "DEPARTAMENTO_RACCN",
       "nombre": "RACCN",
-      "x": 840,
-      "y": 500,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 890,
+      "y": 320,
+      "color_letra": "#FFF",
+      "tamano_fuente": 50
     },
     {
       "id": "DEPARTAMENTO_RACCS",
       "nombre": "RACCS",
-      "x": 850,
-      "y": 780,
-      "color_letra": "#333333",
-      "tamano_fuente": 6
+      "x": 890,
+      "y": 680,
+      "color_letra": "#FFF",
+      "tamano_fuente": 50
     }
   ],
   "viewBox": {
