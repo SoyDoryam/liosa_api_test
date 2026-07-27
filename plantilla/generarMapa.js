@@ -721,7 +721,7 @@ function paginaInfografia({
 // PAGINA 4: ÓRDENES EXPRES VS NORMALES
 // Verde = Normal, Amarillo = Exprés
 // ============================================================
-const VERDE_NORMAL = "#2E7D32";
+const VERDE_NORMAL = "#006666";
 const AMARILLO_EXPRES = "#F9A825";
 
 function paginaOrdenExpresVsNormal(data) {
