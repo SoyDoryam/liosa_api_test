@@ -1007,26 +1007,6 @@ function generarMapa(data) {
 
                 const max = Math.max(...Object.values(depTotales), 1);
 
-                const deptCoords = {
-                    "DEPARTAMENTO_MANAGUA": { x: 165, y: 95 },
-                    "DEPARTAMENTO_CHINANDEGA": { x: 55, y: 55 },
-                    "DEPARTAMENTO_LEON": { x: 75, y: 75 },
-                    "DEPARTAMENTO_MASAYA": { x: 150, y: 120 },
-                    "DEPARTAMENTO_GRANADA": { x: 145, y: 145 },
-                    "DEPARTAMENTO_CARAZO": { x: 160, y: 140 },
-                    "DEPARTAMENTO_RIVAS": { x: 145, y: 175 },
-                    "DEPARTAMENTO_ESTELI": { x: 100, y: 60 },
-                    "DEPARTAMENTO_MATAGALPA": { x: 130, y: 75 },
-                    "DEPARTAMENTO_JINOTEGA": { x: 115, y: 55 },
-                    "DEPARTAMENTO_NUEVA_SEGOVIA": { x: 95, y: 30 },
-                    "DEPARTAMENTO_MADRIZ": { x: 75, y: 35 },
-                    "DEPARTAMENTO_CHONTALES": { x: 195, y: 100 },
-                    "DEPARTAMENTO_BOACO": { x: 185, y: 85 },
-                    "DEPARTAMENTO_RIO_SAN_JUAN": { x: 195, y: 175 },
-                    "DEPARTAMENTO_RACCN": { x: 290, y: 55 },
-                    "DEPARTAMENTO_RACCS": { x: 295, y: 130 },
-                };
-
                 const deptBarData = departamentosMapa.map((dep) => {
                     const n = depNormal[dep];
                     const e = depExpress[dep];
@@ -1055,20 +1035,28 @@ function generarMapa(data) {
                     ];
                 });
 
-                const barW = 18;
-                const maxBarH = 70;
-                const barMapa = [];
-                deptBarData.forEach(({ dep, pN, t }) => {
-                    const coords = deptCoords[dep];
-                    if (!coords) return;
-                    const barH = Math.max(4, (t / max) * maxBarH);
-                    const wN = (pN / 100) * barW;
-                    const wE = ((100 - pN) / 100) * barW;
-                    barMapa.push(
-                        { type: "rect", x: coords.x - barW / 2, y: coords.y - barH, w: barW, h: barH, color: ROSA.grisClaro },
-                        { type: "rect", x: coords.x - barW / 2, y: coords.y - barH, w: wN, h: barH, color: VERDE_NORMAL },
-                        { type: "rect", x: coords.x - barW / 2 + wN, y: coords.y - barH, w: wE, h: barH, color: AMARILLO_EXPRES },
-                    );
+                deptBarData.forEach(({ dep, pN }) => {
+                    const pctN = pN;
+                    const gradId = `grad_${dep.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                    const gradDef = `<linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:${VERDE_NORMAL};stop-opacity:1" /><stop offset="${pctN}%" style="stop-color:${VERDE_NORMAL};stop-opacity:1" /><stop offset="${pctN}%" style="stop-color:${AMARILLO_EXPRES};stop-opacity:1" /><stop offset="100%" style="stop-color:${AMARILLO_EXPRES};stop-opacity:1" /></linearGradient>`;
+                    svg = svg.replace(/<defs>/i, '<defs>' + gradDef);
+                    const regexGrupo = new RegExp(`<g([^>]*)id="${dep}"([^>]*)>([\\s\\S]*?)</g>`, "i");
+                    if (regexGrupo.test(svg)) {
+                        svg = svg.replace(regexGrupo, (match, antes, despues, contenido) => {
+                            contenido = contenido.replace(/<(path|polygon|rect|circle)([^>]*)\/?>/gi, (tag, tipo, atributos) => {
+                                atributos = atributos.replace(/class="[^"]*"/g, "").replace(/fill="[^"]*"/g, "").replace(/stroke="[^"]*"/g, "").replace(/\/$/, "").trim();
+                                return `<${tipo} ${atributos} fill="url(#${gradId})" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>`;
+                            });
+                            return `<g id="${dep}">${contenido}</g>`;
+                        });
+                    }
+                    const regexPath = new RegExp(`<path([^>]*)id="${dep}"([^>]*)/>`, "i");
+                    if (regexPath.test(svg)) {
+                        svg = svg.replace(regexPath, (match, antes, despues) => {
+                            let atributos = (antes + despues).replace(/class="[^"]*"/g, "").replace(/fill="[^"]*"/g, "").replace(/stroke="[^"]*"/g, "").replace(/\/$/, "").trim();
+                            return `<path id="${dep}" ${atributos} fill="url(#${gradId})" stroke="#FFFFFF" stroke-width="2"/>`;
+                        });
+                    }
                 });
 
                 return [
@@ -1106,17 +1094,12 @@ function generarMapa(data) {
                                         alignment: "center",
                                         margin: [0, 0, 0, 8],
                                     },
-                                    {
-                                        canvas: [
-                                            { type: "rect", x: 35, y: 15, w: 290, h: 190, color: "#FAFAFA", r: 5 },
-                                            ...barMapa,
-                                        ],
-                                    },
+                                    { svg: svg, fit: [480, 320], alignment: "center" },
                                     {
                                         columns: [
                                             { text: "■ Verde = Normal", fontSize: 8, color: VERDE_NORMAL, alignment: "center", width: "25%" },
                                             { text: "■ Amarillo = Exprés", fontSize: 8, color: AMARILLO_EXPRES, alignment: "center", width: "25%" },
-                                            { text: "■ Altura = Cantidad total", fontSize: 8, color: ROSA.grisTexto, alignment: "center", width: "50%" },
+                                            { text: "■ Forma = Forma del departamento", fontSize: 8, color: ROSA.grisTexto, alignment: "center", width: "50%" },
                                         ],
                                         margin: [0, 6, 0, 0],
                                     },
