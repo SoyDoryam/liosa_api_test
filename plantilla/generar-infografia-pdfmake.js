@@ -539,180 +539,157 @@ function paginaSobrecumplimiento(statsMat, statsBeo) {
 }
 
 // 9. Resumen de sucursales que cumplieron por metrica (barras blancas)
+const ESCALA_COLORES_CUMPLIMIENTO = [
+    { limite: 100, color: "#fadbdd" },
+    { limite: 80, color: "#f19da1" },
+    { limite: 60, color: "#e75a61" },
+    { limite: 40, color: "#d61f28" },
+    { limite: 0, color: "#98161c" },
+]
+
+const LEYENDA_CUMPLIMIENTO = [
+    { color: "#98161c", label: "<40%" },
+    { color: "#d61f28", label: "40-59%" },
+    { color: "#e75a61", label: "60-79%" },
+    { color: "#f19da1", label: "80-99%" },
+    { color: "#fadbdd", label: "100%+" },
+]
+
+function getColorCumplimiento(porcentaje) {
+    if (porcentaje === 0) return COLOR_SIN
+    for (const nivel of ESCALA_COLORES_CUMPLIMIENTO) {
+        if (porcentaje >= nivel.limite) return nivel.color
+    }
+    return COLOR_SIN
+}
+
+function calcularPorcentaje(data, campoCantidad, campoMeta) {
+    const cantidad = sumBy(data, campoCantidad)
+    const meta = sumBy(data, campoMeta)
+    return meta > 0 ? Math.round((cantidad / meta) * 100) : 0
+}
+
+function construirTarjetaResumen(titulo, colorTitulo, totalUnidades, porcentaje, colorFondo) {
+    return {
+        stack: [
+            { text: titulo, color: colorTitulo, bold: true, fontSize: 16, alignment: "center", margin: [0, 0, 0, 6] },
+            {
+                columns: [
+                    { text: totalUnidades.toLocaleString(), color: colorTitulo, bold: true, fontSize: 32, alignment: "center" },
+                    { text: porcentaje + "%", color: colorTitulo, bold: true, fontSize: 22, alignment: "center" },
+                ],
+            },
+            { text: "Unidades / Cumplimiento", color: GRIS_TEXTO, fontSize: 9, alignment: "center", margin: [0, 4, 0, 0] },
+        ],
+        fillColor: colorFondo,
+        margin: [6, 10, 6, 10],
+    }
+}
+
+function construirCeldaMetrica(label, cantidad, porcentaje, colorFondo) {
+    const anchoBarra = 180
+    const anchoRelleno = Math.max(2, Math.min(anchoBarra, (porcentaje / 100) * anchoBarra))
+
+    return {
+        stack: [
+            { text: label, color: BLANCO, bold: true, fontSize: 9, alignment: "center", margin: [0, 3, 0, 3] },
+            {
+                columns: [
+                    { text: cantidad.toLocaleString(), color: BLANCO, bold: true, fontSize: 16, alignment: "center", width: "*" },
+                    { text: porcentaje + "%", color: BLANCO, fontSize: 12, alignment: "center", width: "auto" },
+                ],
+                margin: [0, 0, 0, 3],
+            },
+            {
+                canvas: [
+                    { type: "rect", x: 0, y: 0, w: anchoBarra, h: 7, r: 3, color: "#FFFFFF", fillOpacity: 0.25 },
+                    { type: "rect", x: 0, y: 0, w: anchoRelleno, h: 7, r: 3, color: BLANCO },
+                ],
+                margin: [0, 0, 0, 0],
+            },
+        ],
+        fillColor: colorFondo,
+        margin: [3, 3, 3, 3],
+    }
+}
+
 function paginaMetricasCumplidas(dataMat, dataBeo) {
-    const metricas = [
-        ["Convencionales", "CANT_CONVENCIONALES", "META_CONVENCIONALES"],
-        ["Digitales", "CANT_DIGITALES", "META_DIGITALES"],
-        ["Limpiadores", "CANT_LIMPIADORES", "META_LIMPIADORES"],
-        ["Aros de sol", "CANT_AROS_SOL", "META_AROS_SOL"],
-        ["Credilentes", "CANT_CREDIMAS", "META_CREDIMAS"],
-        ["Lentes de contacto", "CANT_LC", "META_LC"],
-        ["Asistencia hogar", "CANT_ASIS_HOGAR", "META_ASIS_HOGAR"],
-        ["Asistencia salud", "CANT_ASIS_SALUD", "META_ASIS_SALUD"],
-        ["Servicio completo", "CANT_SERV_COMP", "META_SERV_COMP"],
-        ["Servicio express", "CANT_SERV_EXPRESS", "META_SERV_EXPRESS"],
-        ["Solucion LC", "CANT_SOL_LC", "META_SOL_LC"],
+    const METRICAS = [
+        { label: "Convencionales", cant: "CANT_CONVENCIONALES", meta: "META_CONVENCIONALES" },
+        { label: "Digitales", cant: "CANT_DIGITALES", meta: "META_DIGITALES" },
+        { label: "Limpiadores", cant: "CANT_LIMPIADORES", meta: "META_LIMPIADORES" },
+        { label: "Aros de sol", cant: "CANT_AROS_SOL", meta: "META_AROS_SOL" },
+        { label: "Credilentes", cant: "CANT_CREDIMAS", meta: "META_CREDIMAS" },
+        { label: "Lentes contacto", cant: "CANT_LC", meta: "META_LC" },
+        { label: "Asistencia hogar", cant: "CANT_ASIS_HOGAR", meta: "META_ASIS_HOGAR" },
+        { label: "Asistencia salud", cant: "CANT_ASIS_SALUD", meta: "META_ASIS_SALUD" },
+        { label: "Servicio completo", cant: "CANT_SERV_COMP", meta: "META_SERV_COMP" },
+        { label: "Servicio express", cant: "CANT_SERV_EXPRESS", meta: "META_SERV_EXPRESS" },
+        { label: "Solucion LC", cant: "CANT_SOL_LC", meta: "META_SOL_LC" },
     ]
 
-    const getCumplimiento = (data, cantKey, metaKey) => {
-        const totalCant = sumBy(data, cantKey)
-        const totalMeta = sumBy(data, metaKey)
-        return totalMeta > 0 ? Math.round((totalCant / totalMeta) * 100) : 0
+    const resultadosMat = METRICAS.map((m) => ({
+        label: m.label,
+        cantidad: sumBy(dataMat, m.cant),
+        porcentaje: calcularPorcentaje(dataMat, m.cant, m.meta),
+    }))
+
+    const resultadosBeo = METRICAS.map((m) => ({
+        label: m.label,
+        cantidad: sumBy(dataBeo, m.cant),
+        porcentaje: calcularPorcentaje(dataBeo, m.cant, m.meta),
+    }))
+
+    const totalesMat = {
+        unidades: resultadosMat.reduce((sum, r) => sum + r.cantidad, 0),
+        porcentaje: calcularPorcentaje(dataMat, "CANT_TOTAL_KPI", "META_GLOBAL"),
     }
 
-    const getColorPorCumplimiento = (pct) => {
-        if (pct === 0) return COLOR_SIN
-        if (pct >= 100) return "#fadbdd"
-        if (pct >= 80) return "#f19da1"
-        if (pct >= 60) return "#e75a61"
-        if (pct >= 40) return "#d61f28"
-        return "#98161c"
+    const totalesBeo = {
+        unidades: resultadosBeo.reduce((sum, r) => sum + r.cantidad, 0),
+        porcentaje: calcularPorcentaje(dataBeo, "CANT_TOTAL_KPI", "META_GLOBAL"),
     }
 
-    const resultados = metricas.map(([label, cantKey, metaKey]) => {
-        const pctMat = getCumplimiento(dataMat, cantKey, metaKey)
-        const pctBeo = getCumplimiento(dataBeo, cantKey, metaKey)
-        const cantMat = sumBy(dataMat, cantKey)
-        const cantBeo = sumBy(dataBeo, cantKey)
-        return {
-            label,
-            cantMat,
-            cantBeo,
-            pctMat,
-            pctBeo,
-        }
+    const filasMetricas = resultadosMat.map((r, i) => [
+        construirCeldaMetrica(r.label, r.cantidad, r.porcentaje, getColorCumplimiento(r.porcentaje)),
+        construirCeldaMetrica(resultadosBeo[i].label, resultadosBeo[i].cantidad, resultadosBeo[i].porcentaje, getColorCumplimiento(resultadosBeo[i].porcentaje)),
+    ])
+
+    const BarraLeyenda = () => ({
+        columns: LEYENDA_CUMPLIMIENTO.map((l) => ({
+            width: "auto",
+            stack: [
+                { canvas: [{ type: "rect", x: 0, y: 0, w: 14, h: 9, color: l.color }], margin: [2, 0, 2, 0] },
+                { text: l.label, fontSize: 6, color: GRIS_TEXTO, alignment: "center" },
+            ],
+        })),
+        margin: [0, 8, 0, 0],
     })
-
-    const totalCantMat = resultados.reduce((a, r) => a + r.cantMat, 0)
-    const totalCantBeo = resultados.reduce((a, r) => a + r.cantBeo, 0)
-    const totalPctMat = getCumplimiento(dataMat, "CANT_TOTAL_KPI", "META_GLOBAL")
-    const totalPctBeo = getCumplimiento(dataBeo, "CANT_TOTAL_KPI", "META_GLOBAL")
-
-    const filas = resultados.map((r) => {
-        const colorMat = getColorPorCumplimiento(r.pctMat)
-        const colorBeo = getColorPorCumplimiento(r.pctBeo)
-
-        return [
-            {
-                stack: [
-                    { text: r.label, color: BLANCO, bold: true, fontSize: 8, alignment: "center", margin: [0, 4, 0, 2] },
-                    {
-                        columns: [
-                            { text: String(r.cantMat), color: BLANCO, bold: true, fontSize: 14, alignment: "center" },
-                            { text: r.pctMat + "%", color: BLANCO, bold: true, fontSize: 10, alignment: "center" },
-                        ],
-                    },
-                    {
-                        canvas: [
-                            { type: "rect", x: 0, y: 0, w: 200, h: 6, r: 3, color: "#FFFFFF", fillOpacity: 0.3 },
-                            { type: "rect", x: 0, y: 0, w: Math.max(1, Math.min(200, (r.pctMat / 100) * 200)), h: 6, r: 3, color: BLANCO },
-                        ],
-                        margin: [0, 2, 0, 0],
-                    },
-                ],
-                fillColor: colorMat,
-                margin: [4, 4, 4, 4],
-            },
-            {
-                stack: [
-                    { text: r.label, color: BLANCO, bold: true, fontSize: 8, alignment: "center", margin: [0, 4, 0, 2] },
-                    {
-                        columns: [
-                            { text: String(r.cantBeo), color: BLANCO, bold: true, fontSize: 14, alignment: "center" },
-                            { text: r.pctBeo + "%", color: BLANCO, bold: true, fontSize: 10, alignment: "center" },
-                        ],
-                    },
-                    {
-                        canvas: [
-                            { type: "rect", x: 0, y: 0, w: 200, h: 6, r: 3, color: "#FFFFFF", fillOpacity: 0.3 },
-                            { type: "rect", x: 0, y: 0, w: Math.max(1, Math.min(200, (r.pctBeo / 100) * 200)), h: 6, r: 3, color: BLANCO },
-                        ],
-                        margin: [0, 2, 0, 0],
-                    },
-                ],
-                fillColor: colorBeo,
-                margin: [4, 4, 4, 4],
-            },
-        ]
-    })
-
-    const leyendaColor = [
-        { color: "#98161c", label: "<40%" },
-        { color: "#d61f28", label: "40-59%" },
-        { color: "#e75a61", label: "60-79%" },
-        { color: "#f19da1", label: "80-99%" },
-        { color: "#fadbdd", label: "100%+" },
-    ]
 
     return [
-        ...bannerComparativo("SUCURSALES QUE CUMPLIERON", "Cumplimiento por metrica"),
+        ...bannerComparativo("SUCURSALES QUE CUMPLIERON", "Unidades vendidas vs meta por categoria"),
         {
             columns: [
                 {
                     width: "50%",
                     stack: [
-                        {
-                            stack: [
-                                { text: "MATAMOROS", color: ROJO, bold: true, fontSize: 14, alignment: "center", margin: [0, 0, 0, 4] },
-                                {
-                                    columns: [
-                                        { text: String(totalCantMat), color: ROJO, bold: true, fontSize: 28, alignment: "center" },
-                                        { text: totalPctMat + "%", color: ROJO, bold: true, fontSize: 18, alignment: "center" },
-                                    ],
-                                },
-                                { text: "unidades / cumplimiento", color: GRIS_TEXTO, fontSize: 8, alignment: "center" },
-                            ],
-                            fillColor: "#fadbdd",
-                            margin: [4, 8, 4, 8],
-                        },
-                        {
-                            columns: leyendaColor.map((l) => ({
-                                width: "auto",
-                                stack: [
-                                    { canvas: [{ type: "rect", x: 0, y: 0, w: 12, h: 8, color: l.color }], margin: [2, 0, 2, 0] },
-                                    { text: l.label, fontSize: 6, color: GRIS_TEXTO, alignment: "center" },
-                                ],
-                            })),
-                            margin: [0, 6, 0, 0],
-                        },
+                        construirTarjetaResumen("MATAMOROS", ROJO, totalesMat.unidades, totalesMat.porcentaje, getColorCumplimiento(totalesMat.porcentaje)),
+                        BarraLeyenda(),
                     ],
                 },
                 {
                     width: "50%",
                     stack: [
-                        {
-                            stack: [
-                                { text: "VEOMAS", color: AZUL, bold: true, fontSize: 14, alignment: "center", margin: [0, 0, 0, 4] },
-                                {
-                                    columns: [
-                                        { text: String(totalCantBeo), color: AZUL, bold: true, fontSize: 28, alignment: "center" },
-                                        { text: totalPctBeo + "%", color: AZUL, bold: true, fontSize: 18, alignment: "center" },
-                                    ],
-                                },
-                                { text: "unidades / cumplimiento", color: GRIS_TEXTO, fontSize: 8, alignment: "center" },
-                            ],
-                            fillColor: "#fadbdd",
-                            margin: [4, 8, 4, 8],
-                        },
-                        {
-                            columns: leyendaColor.map((l) => ({
-                                width: "auto",
-                                stack: [
-                                    { canvas: [{ type: "rect", x: 0, y: 0, w: 12, h: 8, color: l.color }], margin: [2, 0, 2, 0] },
-                                    { text: l.label, fontSize: 6, color: GRIS_TEXTO, alignment: "center" },
-                                ],
-                            })),
-                            margin: [0, 6, 0, 0],
-                        },
+                        construirTarjetaResumen("VEOMAS", AZUL, totalesBeo.unidades, totalesBeo.porcentaje, getColorCumplimiento(totalesBeo.porcentaje)),
+                        BarraLeyenda(),
                     ],
                 },
             ],
-            margin: [0, 0, 0, 10],
+            margin: [0, 0, 0, 8],
         },
         {
-            table: { widths: ["50%", "50%"], body: filas },
+            table: { widths: ["50%", "50%"], body: filasMetricas },
             layout: { defaultBorder: false },
-            margin: [0, 0, 0, 0],
         },
     ]
 }
