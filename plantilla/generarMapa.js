@@ -1005,27 +1005,38 @@ function generarMapa(data) {
                     else depNormal[departamento]++;
                 });
 
-                let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
                 const max = Math.max(...Object.values(depTotales), 1);
 
-                Object.entries(depTotales).forEach(([deptId, total]) => {
-                    const n = depNormal[deptId];
-                    const e = depExpress[deptId];
-                    const t = n + e;
-                    const pctExpres = t > 0 ? (e / t) * 100 : 50;
-                    const pctTotal = Math.round((t / max) * 100);
-                    const colorMix = getColorTema(VERDE_NORMAL, pctTotal);
-                    const colorFinal = mezclarDosColores(colorMix, AMARILLO_EXPRES, pctExpres / 100);
-                    svg = pintarDepartamento(svg, deptId, colorFinal);
-                });
+                const deptCoords = {
+                    "DEPARTAMENTO_MANAGUA": { x: 165, y: 95 },
+                    "DEPARTAMENTO_CHINANDEGA": { x: 55, y: 55 },
+                    "DEPARTAMENTO_LEON": { x: 75, y: 75 },
+                    "DEPARTAMENTO_MASAYA": { x: 150, y: 120 },
+                    "DEPARTAMENTO_GRANADA": { x: 145, y: 145 },
+                    "DEPARTAMENTO_CARAZO": { x: 160, y: 140 },
+                    "DEPARTAMENTO_RIVAS": { x: 145, y: 175 },
+                    "DEPARTAMENTO_ESTELI": { x: 100, y: 60 },
+                    "DEPARTAMENTO_MATAGALPA": { x: 130, y: 75 },
+                    "DEPARTAMENTO_JINOTEGA": { x: 115, y: 55 },
+                    "DEPARTAMENTO_NUEVA_SEGOVIA": { x: 95, y: 30 },
+                    "DEPARTAMENTO_MADRIZ": { x: 75, y: 35 },
+                    "DEPARTAMENTO_CHONTALES": { x: 195, y: 100 },
+                    "DEPARTAMENTO_BOACO": { x: 185, y: 85 },
+                    "DEPARTAMENTO_RIO_SAN_JUAN": { x: 195, y: 175 },
+                    "DEPARTAMENTO_RACCN": { x: 290, y: 55 },
+                    "DEPARTAMENTO_RACCS": { x: 295, y: 130 },
+                };
 
-                const filas = departamentosMapa.map((dep) => {
-                    const nombre = dep.replace("DEPARTAMENTO_", "");
+                const deptBarData = departamentosMapa.map((dep) => {
                     const n = depNormal[dep];
                     const e = depExpress[dep];
                     const t = n + e;
                     const pE = t > 0 ? Math.round((e / t) * 100) : 50;
                     const pN = t > 0 ? 100 - pE : 50;
+                    return { dep, nombre: dep.replace("DEPARTAMENTO_", ""), n, e, t, pN, pE };
+                }).sort((a, b) => b.t - a.t);
+
+                const filas = deptBarData.map(({ nombre, t, pN, pE }) => {
                     return [
                         { text: nombre, fontSize: 8, color: ROSA.grisTexto },
                         { text: t.toLocaleString(), fontSize: 8, alignment: "center", bold: true, color: ROSA.grisTexto },
@@ -1042,6 +1053,22 @@ function generarMapa(data) {
                             ]
                         },
                     ];
+                });
+
+                const barW = 18;
+                const maxBarH = 70;
+                const barMapa = [];
+                deptBarData.forEach(({ dep, pN, t }) => {
+                    const coords = deptCoords[dep];
+                    if (!coords) return;
+                    const barH = Math.max(4, (t / max) * maxBarH);
+                    const wN = (pN / 100) * barW;
+                    const wE = ((100 - pN) / 100) * barW;
+                    barMapa.push(
+                        { type: "rect", x: coords.x - barW / 2, y: coords.y - barH, w: barW, h: barH, color: ROSA.grisClaro },
+                        { type: "rect", x: coords.x - barW / 2, y: coords.y - barH, w: wN, h: barH, color: VERDE_NORMAL },
+                        { type: "rect", x: coords.x - barW / 2 + wN, y: coords.y - barH, w: wE, h: barH, color: AMARILLO_EXPRES },
+                    );
                 });
 
                 return [
@@ -1079,12 +1106,17 @@ function generarMapa(data) {
                                         alignment: "center",
                                         margin: [0, 0, 0, 8],
                                     },
-                                    { svg: svg, fit: [480, 320], alignment: "center" },
+                                    {
+                                        canvas: [
+                                            { type: "rect", x: 35, y: 15, w: 290, h: 190, color: "#FAFAFA", r: 5 },
+                                            ...barMapa,
+                                        ],
+                                    },
                                     {
                                         columns: [
                                             { text: "■ Verde = Normal", fontSize: 8, color: VERDE_NORMAL, alignment: "center", width: "25%" },
                                             { text: "■ Amarillo = Exprés", fontSize: 8, color: AMARILLO_EXPRES, alignment: "center", width: "25%" },
-                                            { text: "■ Color mapa = Mezcla según % Exprés", fontSize: 8, color: ROSA.grisTexto, alignment: "center", width: "50%" },
+                                            { text: "■ Altura = Cantidad total", fontSize: 8, color: ROSA.grisTexto, alignment: "center", width: "50%" },
                                         ],
                                         margin: [0, 6, 0, 0],
                                     },
