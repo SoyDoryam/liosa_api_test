@@ -924,11 +924,11 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
 
         const getColorCumplimientoLocal = (pct) => {
             if (pct === 0) return COLOR_SIN
-            if (pct >= 100) return colorBase === ROJO ? "#fadbdd" : "#a3c9e2"
-            if (pct >= 80) return colorBase === ROJO ? "#f19da1" : "#7eb8da"
-            if (pct >= 60) return colorBase === ROJO ? "#e75a61" : "#5aa8d1"
-            if (pct >= 40) return colorBase === ROJO ? "#d61f28" : "#2980b9"
-            return colorBase === ROJO ? "#98161c" : "#1a5276"
+            if (pct >= 100) return colorBase === ROJO ? "#fadbdd" : "#b3d9ff"
+            if (pct >= 80) return colorBase === ROJO ? "#f19da1" : "#87ceeb"
+            if (pct >= 60) return colorBase === ROJO ? "#e75a61" : "#1e90ff"
+            if (pct >= 40) return colorBase === ROJO ? "#d61f28" : "#005bbb"
+            return colorBase === ROJO ? "#98161c" : "#003366"
         }
 
         Object.entries(deptCumplimiento).forEach(([deptId, cumplimiento]) => {
@@ -977,11 +977,11 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
     ]
 
     const leyendaColorBeo = [
-        { color: "#1a5276", label: "<40%" },
-        { color: "#2980b9", label: "40-59%" },
-        { color: "#5aa8d1", label: "60-79%" },
-        { color: "#7eb8da", label: "80-99%" },
-        { color: "#a3c9e2", label: "100%+" },
+        { color: "#003366", label: "<40%" },
+        { color: "#005bbb", label: "40-59%" },
+        { color: "#1e90ff", label: "60-79%" },
+        { color: "#87ceeb", label: "80-99%" },
+        { color: "#b3d9ff", label: "100%+" },
         { color: COLOR_SIN, label: "Sin datos" },
     ]
 
