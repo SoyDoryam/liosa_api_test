@@ -1116,6 +1116,12 @@ function generarMapa(data) {
 
                 const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
 
+                const carpeta = path.join(__dirname, "svggenerados");
+                if (!fs.existsSync(carpeta)) {
+                    fs.mkdirSync(carpeta, { recursive: true });
+                }
+                fs.writeFileSync(path.join(carpeta, "ni_expres_normal.svg"), svgWithLabels, "utf8");
+
                 return [
                     {
                         pageBreak: "before",
