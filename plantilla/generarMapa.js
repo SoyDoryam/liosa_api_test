@@ -1229,7 +1229,7 @@ function paginaGestion(data) {
     });
 
     const deptBarData = departamentosMapa.map((dep) => {
-        const nombre = depLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
+        const nombre = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
         const gestData = depGestion[dep];
         const total = Object.values(gestData).reduce((a, b) => a + b, 0);
         const gestCount = {};
