@@ -1,6 +1,14 @@
 const fs = require("fs");
 const path = require("path");
 
+const coordsDepartamentos = JSON.parse(fs.readFileSync(path.join(__dirname, "coords_departamentos.json"), "utf8"));
+const deptCentroidesFijos = {};
+const deptLabelsNombres = {};
+coordsDepartamentos.departamentos.forEach(d => {
+    deptCentroidesFijos[d.id] = { x: d.x, y: d.y };
+    deptLabelsNombres[d.id] = d.nombre;
+});
+
 // Sucursal -> Departamento
 const sucursalDepartamento = {
     // LEON
@@ -1125,26 +1133,6 @@ function generarMapa(data) {
                     ];
                 });
 
-                const deptCentroidesFijos = {
-                    "DEPARTAMENTO_MANAGUA": { x: 490, y: 710 },
-                    "DEPARTAMENTO_CHINANDEGA": { x: 60, y: 600 },
-                    "DEPARTAMENTO_LEON": { x: 85, y: 655 },
-                    "DEPARTAMENTO_MASAYA": { x: 430, y: 760 },
-                    "DEPARTAMENTO_GRANADA": { x: 420, y: 820 },
-                    "DEPARTAMENTO_CARAZO": { x: 455, y: 830 },
-                    "DEPARTAMENTO_RIVAS": { x: 430, y: 965 },
-                    "DEPARTAMENTO_ESTELI": { x: 220, y: 620 },
-                    "DEPARTAMENTO_MATAGALPA": { x: 325, y: 650 },
-                    "DEPARTAMENTO_JINOTEGA": { x: 280, y: 540 },
-                    "DEPARTAMENTO_NUEVA_SEGOVIA": { x: 200, y: 320 },
-                    "DEPARTAMENTO_MADRIZ": { x: 150, y: 380 },
-                    "DEPARTAMENTO_CHONTALES": { x: 545, y: 705 },
-                    "DEPARTAMENTO_BOACO": { x: 520, y: 650 },
-                    "DEPARTAMENTO_RIO_SAN_JUAN": { x: 560, y: 985 },
-                    "DEPARTAMENTO_RACCN": { x: 840, y: 500 },
-                    "DEPARTAMENTO_RACCS": { x: 850, y: 780 },
-                };
-
                 function extraerPathDelDepto(svg, dep) {
                     const regexPath = new RegExp(`<path[^>]*id="${dep}"[^>]*d="([^"]+)"`);
                     const match = svg.match(regexPath);
@@ -1337,37 +1325,6 @@ function generarMapa(data) {
                     { text: m.toLocaleString(), fontSize: 7, alignment: "center", color: "#B30000", bold: true },
                     { text: v.toLocaleString(), fontSize: 7, alignment: "center", color: "#1A407F", bold: true },
                 ]);
-
-                const deptCentroidesFijos = {
-                    "DEPARTAMENTO_MANAGUA": { x: 490, y: 710 },
-                    "DEPARTAMENTO_CHINANDEGA": { x: 60, y: 600 },
-                    "DEPARTAMENTO_LEON": { x: 85, y: 655 },
-                    "DEPARTAMENTO_MASAYA": { x: 430, y: 760 },
-                    "DEPARTAMENTO_GRANADA": { x: 420, y: 820 },
-                    "DEPARTAMENTO_CARAZO": { x: 455, y: 830 },
-                    "DEPARTAMENTO_RIVAS": { x: 430, y: 965 },
-                    "DEPARTAMENTO_ESTELI": { x: 220, y: 620 },
-                    "DEPARTAMENTO_MATAGALPA": { x: 325, y: 650 },
-                    "DEPARTAMENTO_JINOTEGA": { x: 280, y: 540 },
-                    "DEPARTAMENTO_NUEVA_SEGOVIA": { x: 200, y: 320 },
-                    "DEPARTAMENTO_MADRIZ": { x: 150, y: 380 },
-                    "DEPARTAMENTO_CHONTALES": { x: 545, y: 705 },
-                    "DEPARTAMENTO_BOACO": { x: 520, y: 650 },
-                    "DEPARTAMENTO_RIO_SAN_JUAN": { x: 560, y: 985 },
-                    "DEPARTAMENTO_RACCN": { x: 840, y: 500 },
-                    "DEPARTAMENTO_RACCS": { x: 850, y: 780 },
-                };
-                const deptLabelsNombres = {
-                    "DEPARTAMENTO_MANAGUA": "Managua", "DEPARTAMENTO_CHINANDEGA": "Chinandega",
-                    "DEPARTAMENTO_LEON": "León", "DEPARTAMENTO_MASAYA": "Masaya",
-                    "DEPARTAMENTO_GRANADA": "Granada", "DEPARTAMENTO_CARAZO": "Carazo",
-                    "DEPARTAMENTO_RIVAS": "Rivas", "DEPARTAMENTO_ESTELI": "Estelí",
-                    "DEPARTAMENTO_MATAGALPA": "Matagalpa", "DEPARTAMENTO_JINOTEGA": "Jinotega",
-                    "DEPARTAMENTO_NUEVA_SEGOVIA": "Nva.Segovia", "DEPARTAMENTO_MADRIZ": "Madriz",
-                    "DEPARTAMENTO_CHONTALES": "Chontales", "DEPARTAMENTO_BOACO": "Boaco",
-                    "DEPARTAMENTO_RIO_SAN_JUAN": "Río San Juan", "DEPARTAMENTO_RACCN": "RACCN",
-                    "DEPARTAMENTO_RACCS": "RACCS",
-                };
 
                 const labelSvg = deptBarData.map(({ dep }) => {
                     const centroide = deptCentroidesFijos[dep];
