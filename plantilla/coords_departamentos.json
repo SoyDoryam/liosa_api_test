@@ -5,145 +5,140 @@
       "nombre": "Managua",
       "x": 490,
       "y": 710,
-      "ancho_etiqueta": 60,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_CHINANDEGA",
       "nombre": "Chinandega",
       "x": 60,
       "y": 600,
-      "ancho_etiqueta": 65,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_LEON",
       "nombre": "León",
       "x": 85,
       "y": 655,
-      "ancho_etiqueta": 35,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_MASAYA",
       "nombre": "Masaya",
       "x": 430,
       "y": 760,
-      "ancho_etiqueta": 45,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_GRANADA",
       "nombre": "Granada",
       "x": 420,
       "y": 820,
-      "ancho_etiqueta": 50,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_CARAZO",
       "nombre": "Carazo",
       "x": 455,
       "y": 830,
-      "ancho_etiqueta": 45,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_RIVAS",
       "nombre": "Rivas",
       "x": 430,
       "y": 965,
-      "ancho_etiqueta": 35,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_ESTELI",
       "nombre": "Estelí",
       "x": 220,
       "y": 620,
-      "ancho_etiqueta": 40,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_MATAGALPA",
       "nombre": "Matagalpa",
       "x": 325,
       "y": 650,
-      "ancho_etiqueta": 55,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_JINOTEGA",
       "nombre": "Jinotega",
       "x": 280,
       "y": 540,
-      "ancho_etiqueta": 55,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_NUEVA_SEGOVIA",
       "nombre": "Nva. Segovia",
       "x": 200,
       "y": 320,
-      "ancho_etiqueta": 70,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_MADRIZ",
       "nombre": "Madriz",
       "x": 150,
       "y": 380,
-      "ancho_etiqueta": 45,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_CHONTALES",
       "nombre": "Chontales",
       "x": 545,
       "y": 705,
-      "ancho_etiqueta": 60,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_BOACO",
       "nombre": "Boaco",
       "x": 520,
       "y": 650,
-      "ancho_etiqueta": 40,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_RIO_SAN_JUAN",
       "nombre": "Río San Juan",
       "x": 560,
       "y": 985,
-      "ancho_etiqueta": 80,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_RACCN",
       "nombre": "RACCN",
       "x": 840,
       "y": 500,
-      "ancho_etiqueta": 45,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     },
     {
       "id": "DEPARTAMENTO_RACCS",
       "nombre": "RACCS",
       "x": 850,
       "y": 780,
-      "ancho_etiqueta": 45,
-      "alto_etiqueta": 12
+      "color_letra": "#333333",
+      "tamano_fuente": 6
     }
   ],
   "viewBox": {
     "ancho": 1162,
     "alto": 1114
-  },
-  "notas": {
-    "coordenadas": "Centrado de etiquetas (text-anchor=middle, dominant-baseline=middle)",
-    "tamano_fuente": "6px por defecto, ajustable",
-    "tamano_letra": "Arial, bold"
   }
 }

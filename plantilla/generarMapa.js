@@ -4,9 +4,11 @@ const path = require("path");
 const coordsDepartamentos = JSON.parse(fs.readFileSync(path.join(__dirname, "coords_departamentos.json"), "utf8"));
 const deptCentroidesFijos = {};
 const deptLabelsNombres = {};
+const deptLabelStyles = {};
 coordsDepartamentos.departamentos.forEach(d => {
     deptCentroidesFijos[d.id] = { x: d.x, y: d.y };
     deptLabelsNombres[d.id] = d.nombre;
+    deptLabelStyles[d.id] = { color: d.color_letra || "#333333", fontSize: d.tamano_fuente || 6 };
 });
 
 // Sucursal -> Departamento
@@ -1200,7 +1202,8 @@ function generarMapa(data) {
                     const centroide = deptCentroides[dep];
                     if (!centroide) return '';
                     const label = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
-                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="6" fill="#333333" text-anchor="middle" font-weight="bold">${label}</text>`;
+                    const style = deptLabelStyles[dep] || { color: "#333333", fontSize: 6 };
+                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="${style.fontSize}" fill="${style.color}" text-anchor="middle" font-weight="bold">${label}</text>`;
                 }).join('');
 
                 const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
@@ -1330,7 +1333,8 @@ function generarMapa(data) {
                     const centroide = deptCentroidesFijos[dep];
                     if (!centroide) return '';
                     const label = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
-                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="6" fill="#333333" text-anchor="middle" font-weight="bold">${label}</text>`;
+                    const style = deptLabelStyles[dep] || { color: "#333333", fontSize: 6 };
+                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="${style.fontSize}" fill="${style.color}" text-anchor="middle" font-weight="bold">${label}</text>`;
                 }).join('');
 
                 const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
