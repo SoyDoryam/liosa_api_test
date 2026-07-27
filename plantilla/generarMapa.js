@@ -1359,7 +1359,7 @@ function generarMapa(data) {
                                         alignment: "center",
                                         margin: [0, 0, 0, 8],
                                     },
-                                    { svg: svgWithLabels, fit: [480, 320], alignment: "center" },
+                                    { svg: svgWithLabels, fit: [480, 360], alignment: "center", margin: [0, 20, 0, 0] },
                                     {
                                         text: "TOTAL · % PRINCIPAL",
                                         fontSize: 6,
