@@ -1299,77 +1299,57 @@ function generarMapa(data) {
 
                 fs.writeFileSync(path.join(__dirname, "svggenerados", "ni_gestion.svg"), svgWithLabels, "utf8");
 
-                const widths = ["*", ...deptBarData.map(() => 35)];
+                const widths = ["*", 50, ...gestionArray.map(() => 35)];
                 const headerRow = [
-                    { text: "GESTION", color: "#FFFFFF", bold: true, fontSize: 5, fillColor: ROSA.grisTexto },
-                    ...deptBarData.map(d => ({
-                        text: d.nombre.substring(0, 5).toUpperCase(),
+                    { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto },
+                    { text: "TOT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
+                    ...gestionArray.map((g, i) => ({
+                        text: g.substring(0, 5).toUpperCase(),
                         color: "#FFFFFF",
                         bold: true,
                         fontSize: 4,
-                        fillColor: ROSA.grisTexto,
+                        fillColor: coloresGestion[i % coloresGestion.length],
                         alignment: "center"
                     }))
                 ];
 
-                const filas = gestionArray.map((g, gi) => {
-                    const row = [{
-                        text: g.substring(0, 8).toUpperCase(),
-                        fontSize: 5,
-                        color: coloresGestion[gi % coloresGestion.length],
-                        bold: true
-                    }];
-                    deptBarData.forEach(d => {
-                        const cant = d.gestCount[g];
-                        const pct = d.total > 0 ? Math.round((cant / d.total) * 100) : 0;
+                const filas = deptBarData.map(({ nombre, total, gestCount }) => {
+                    const row = [
+                        { text: nombre, fontSize: 6, color: ROSA.grisTexto },
+                        { text: total.toLocaleString(), fontSize: 6, alignment: "center", bold: true, color: ROSA.grisTexto },
+                    ];
+                    gestionArray.forEach((g, i) => {
+                        const cant = gestCount[g];
+                        const pct = total > 0 ? Math.round((cant / total) * 100) : 0;
                         row.push({
                             text: pct > 0 ? `${cant}` : "-",
                             fontSize: 5,
                             alignment: "center",
-                            color: coloresGestion[gi % coloresGestion.length],
+                            color: coloresGestion[i % coloresGestion.length],
                             bold: cant > 0
                         });
                     });
                     return row;
                 });
 
-                const totalesRow = [{
-                    text: "TOTAL",
-                    fontSize: 5,
-                    color: "#FFFFFF",
-                    bold: true,
-                    fillColor: ROSA.grisOscuro
-                }];
-                deptBarData.forEach(d => {
-                    totalesRow.push({
-                        text: d.total.toLocaleString(),
-                        fontSize: 5,
-                        alignment: "center",
-                        bold: true,
-                        color: ROSA.grisTexto,
-                        fillColor: ROSA.grisClaro
-                    });
-                });
-                filas.push(totalesRow);
-
                 return [
                     {
                         pageBreak: "before",
                         columns: [
                             {
-                                width: "25%",
+                                width: "20%",
                                 stack: [
                                     {
                                         table: {
                                             widths: widths,
                                             body: [headerRow, ...filas],
                                         },
-                                        layout: { defaultBorder: false, paddingTop: () => 0, paddingBottom: () => 0, paddingLeft: () => 1, paddingRight: () => 1 },
+                                        layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
                                     },
                                 ],
                             },
                             {
-                                width: "75%",
+                                width: "80%",
                                 stack: [
                                     {
                                         text: "DISTRIBUCIÓN POR TIPO DE GESTIÓN",
@@ -1379,7 +1359,7 @@ function generarMapa(data) {
                                         alignment: "center",
                                         margin: [0, 0, 0, 8],
                                     },
-                                    { svg: svgWithLabels, fit: [420, 300], alignment: "center" },
+                                    { svg: svgWithLabels, fit: [480, 320], alignment: "center" },
                                     {
                                         text: "TOTAL · % PRINCIPAL",
                                         fontSize: 6,
