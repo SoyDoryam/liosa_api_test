@@ -1273,6 +1273,173 @@ function generarMapa(data) {
                     },
                 ];
             })(),
+
+            // ==================== PAGINA 6: MATAMOROS vs VEOMAS ====================
+            ...(() => {
+                const depMatamoros = {};
+                const depVeomas = {};
+                const depTotales = {};
+
+                departamentosMapa.forEach((dep) => {
+                    depMatamoros[dep] = 0;
+                    depVeomas[dep] = 0;
+                    depTotales[dep] = 0;
+                });
+
+                data.forEach((item) => {
+                    const departamento = sucursalDepartamento[item.sucursal];
+                    if (!departamento || departamento === "SIN_MAPA") return;
+                    depTotales[departamento]++;
+                    if (item.id_cliente === 40) depMatamoros[departamento]++;
+                    else if (item.id_cliente === 10) depVeomas[departamento]++;
+                });
+
+                let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
+                const max = Math.max(...Object.values(depTotales), 1);
+
+                deptBarData.forEach(({ dep }) => {
+                    const m = depMatamoros[dep];
+                    const v = depVeomas[dep];
+                    const t = m + v;
+                    const pctVeomas = t > 0 ? (v / t) * 100 : 50;
+                    const pctTotal = Math.round((t / max) * 100);
+                    const intensidad = getColorTema(VERDE_NORMAL, pctTotal);
+                    const gradId = `grad_${dep.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                    const gradDef = `<linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:${VERDE_NORMAL};stop-opacity:1" /><stop offset="${100 - pctVeomas}%" style="stop-color:${VERDE_NORMAL};stop-opacity:1" /><stop offset="${100 - pctVeomas}%" style="stop-color:#1A407F;stop-opacity:1" /><stop offset="100%" style="stop-color:#1A407F;stop-opacity:1" /></linearGradient>`;
+                    svg = svg.replace(/<defs>/i, '<defs>' + gradDef);
+                    const regexGrupo = new RegExp(`<g([^>]*)id="${dep}"([^>]*)>([\\s\\S]*?)</g>`, "i");
+                    if (regexGrupo.test(svg)) {
+                        svg = svg.replace(regexGrupo, (match, antes, despues, contenido) => {
+                            contenido = contenido.replace(/<(path|polygon|rect|circle)([^>]*)\/?>/gi, (tag, tipo, atributos) => {
+                                atributos = atributos.replace(/class="[^"]*"/g, "").replace(/fill="[^"]*"/g, "").replace(/stroke="[^"]*"/g, "").replace(/\/$/, "").trim();
+                                return `<${tipo} ${atributos} fill="url(#${gradId})" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>`;
+                            });
+                            return `<g id="${dep}">${contenido}</g>`;
+                        });
+                    }
+                    const regexPath = new RegExp(`<path([^>]*)id="${dep}"([^>]*)/>`, "i");
+                    if (regexPath.test(svg)) {
+                        svg = svg.replace(regexPath, (match, antes, despues) => {
+                            let atributos = (antes + despues).replace(/class="[^"]*"/g, "").replace(/fill="[^"]*"/g, "").replace(/stroke="[^"]*"/g, "").replace(/\/$/, "").trim();
+                            return `<path id="${dep}" ${atributos} fill="url(#${gradId})" stroke="#FFFFFF" stroke-width="2"/>`;
+                        });
+                    }
+                });
+
+                const deptBarData = departamentosMapa.map((dep) => {
+                    const m = depMatamoros[dep];
+                    const v = depVeomas[dep];
+                    const t = m + v;
+                    const pM = t > 0 ? Math.round((m / t) * 100) : 0;
+                    const pV = t > 0 ? Math.round((v / t) * 100) : 0;
+                    return { dep, nombre: dep.replace("DEPARTAMENTO_", ""), m, v, t, pM, pV };
+                }).filter(d => d.t > 0).sort((a, b) => b.t - a.t);
+
+                const filas = deptBarData.map(({ nombre, t, m, v, pM, pV }) => [
+                    { text: nombre, fontSize: 7, color: ROSA.grisTexto },
+                    { text: t.toString(), fontSize: 7, alignment: "center", color: ROSA.grisTexto },
+                    { text: m.toLocaleString(), fontSize: 7, alignment: "center", color: "#B30000", bold: true },
+                    { text: pM + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+                    { text: v.toLocaleString(), fontSize: 7, alignment: "center", color: "#1A407F", bold: true },
+                    { text: pV + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+                ]);
+
+                const labelSvg = deptBarData.map(({ dep }) => {
+                    const centroide = deptCentroidesFijos[dep];
+                    if (!centroide) return '';
+                    const label = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
+                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="6" fill="#333333" text-anchor="middle" font-weight="bold">${label}</text>`;
+                }).join('');
+
+                const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
+
+                fs.writeFileSync(path.join(__dirname, "svggenerados", "ni_matamoros_veomas.svg"), svgWithLabels, "utf8");
+
+                const totalMat = Object.values(depMatamoros).reduce((a, b) => a + b, 0);
+                const totalVeo = Object.values(depVeomas).reduce((a, b) => a + b, 0);
+                const total = totalMat + totalVeo;
+
+                return [
+                    {
+                        pageBreak: "before",
+                        columns: [
+                            {
+                                width: "20%",
+                                stack: [
+                                    {
+                                        table: {
+                                            widths: ["*", 40, 45, 45],
+                                            body: [
+                                                [
+                                                    { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto },
+                                                    { text: "TOT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
+                                                    { text: "MAT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: "#B30000", alignment: "center" },
+                                                    { text: "VEO", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: "#1A407F", alignment: "center" },
+                                                ],
+                                                ...filas,
+                                            ],
+                                        },
+                                        layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
+                                    },
+                                ],
+                            },
+                            {
+                                width: "60%",
+                                stack: [
+                                    {
+                                        text: "MATAMOROS vs VEOMAS POR DEPARTAMENTO",
+                                        bold: true,
+                                        fontSize: 12,
+                                        color: ROSA.grisTexto,
+                                        alignment: "center",
+                                        margin: [0, 0, 0, 8],
+                                    },
+                                    { svg: svgWithLabels, fit: [400, 280], alignment: "center" },
+                                    {
+                                        columns: [
+                                            { text: "■ Rojo = Matamoros", fontSize: 7, color: "#B30000", alignment: "center", width: "30%" },
+                                            { text: "■ Azul = Veomas", fontSize: 7, color: "#1A407F", alignment: "center", width: "30%" },
+                                            { text: "■ Intensidad = Total órdenes", fontSize: 7, color: ROSA.grisTexto, alignment: "center", width: "40%" },
+                                        ],
+                                        margin: [0, 4, 0, 0],
+                                    },
+                                ],
+                            },
+                            {
+                                width: "20%",
+                                stack: [
+                                    {
+                                        text: "TOTALES",
+                                        bold: true,
+                                        fontSize: 8,
+                                        color: ROSA.grisTexto,
+                                        margin: [0, 0, 0, 4],
+                                    },
+                                    {
+                                        table: {
+                                            widths: ["*", 50],
+                                            body: [
+                                                [{ text: "MATAMOROS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: "#B30000" }, { text: totalMat.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: "#B30000", alignment: "center" }],
+                                                [{ text: "VEOMAS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: "#1A407F" }, { text: totalVeo.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: "#1A407F", alignment: "center" }],
+                                                [{ text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto }, { text: total.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" }],
+                                            ],
+                                        },
+                                        layout: { defaultBorder: false, paddingTop: () => 2, paddingBottom: () => 2, paddingLeft: () => 3, paddingRight: () => 3 },
+                                    },
+                                    {
+                                        text: `${Math.round((totalMat / total) * 100)}% vs ${Math.round((totalVeo / total) * 100)}%`,
+                                        fontSize: 9,
+                                        bold: true,
+                                        color: ROSA.grisTexto,
+                                        alignment: "center",
+                                        margin: [0, 6, 0, 0],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ];
+            })(),
         ],
     };
 }
