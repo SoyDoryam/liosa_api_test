@@ -539,157 +539,96 @@ function paginaSobrecumplimiento(statsMat, statsBeo) {
 }
 
 // 9. Resumen de sucursales que cumplieron por metrica (barras blancas)
-const ESCALA_COLORES_CUMPLIMIENTO = [
-    { limite: 100, color: "#fadbdd" },
-    { limite: 80, color: "#f19da1" },
-    { limite: 60, color: "#e75a61" },
-    { limite: 40, color: "#d61f28" },
-    { limite: 0, color: "#98161c" },
-]
-
-const LEYENDA_CUMPLIMIENTO = [
-    { color: "#98161c", label: "<40%" },
-    { color: "#d61f28", label: "40-59%" },
-    { color: "#e75a61", label: "60-79%" },
-    { color: "#f19da1", label: "80-99%" },
-    { color: "#fadbdd", label: "100%+" },
-]
-
-function getColorCumplimiento(porcentaje) {
-    if (porcentaje === 0) return COLOR_SIN
-    for (const nivel of ESCALA_COLORES_CUMPLIMIENTO) {
-        if (porcentaje >= nivel.limite) return nivel.color
-    }
-    return COLOR_SIN
-}
-
-function calcularPorcentaje(data, campoCantidad, campoMeta) {
-    const cantidad = sumBy(data, campoCantidad)
-    const meta = sumBy(data, campoMeta)
-    return meta > 0 ? Math.round((cantidad / meta) * 100) : 0
-}
-
-function construirTarjetaResumen(titulo, colorTitulo, totalUnidades, porcentaje, colorFondo) {
-    return {
-        stack: [
-            { text: titulo, color: colorTitulo, bold: true, fontSize: 16, alignment: "center", margin: [0, 0, 0, 6] },
-            {
-                columns: [
-                    { text: totalUnidades.toLocaleString(), color: colorTitulo, bold: true, fontSize: 32, alignment: "center" },
-                    { text: porcentaje + "%", color: colorTitulo, bold: true, fontSize: 22, alignment: "center" },
-                ],
-            },
-            { text: "Unidades / Cumplimiento", color: GRIS_TEXTO, fontSize: 9, alignment: "center", margin: [0, 4, 0, 0] },
-        ],
-        fillColor: colorFondo,
-        margin: [6, 10, 6, 10],
-    }
-}
-
-function construirCeldaMetrica(label, cantidad, porcentaje, colorFondo) {
-    const anchoBarra = 180
-    const anchoRelleno = Math.max(2, Math.min(anchoBarra, (porcentaje / 100) * anchoBarra))
-
-    return {
-        stack: [
-            { text: label, color: BLANCO, bold: true, fontSize: 9, alignment: "center", margin: [0, 3, 0, 3] },
-            {
-                columns: [
-                    { text: cantidad.toLocaleString(), color: BLANCO, bold: true, fontSize: 16, alignment: "center", width: "*" },
-                    { text: porcentaje + "%", color: BLANCO, fontSize: 12, alignment: "center", width: "auto" },
-                ],
-                margin: [0, 0, 0, 3],
-            },
-            {
-                canvas: [
-                    { type: "rect", x: 0, y: 0, w: anchoBarra, h: 7, r: 3, color: "#FFFFFF", fillOpacity: 0.25 },
-                    { type: "rect", x: 0, y: 0, w: anchoRelleno, h: 7, r: 3, color: BLANCO },
-                ],
-                margin: [0, 0, 0, 0],
-            },
-        ],
-        fillColor: colorFondo,
-        margin: [3, 3, 3, 3],
-    }
-}
-
 function paginaMetricasCumplidas(dataMat, dataBeo) {
-    const METRICAS = [
-        { label: "Convencionales", cant: "CANT_CONVENCIONALES", meta: "META_CONVENCIONALES" },
-        { label: "Digitales", cant: "CANT_DIGITALES", meta: "META_DIGITALES" },
-        { label: "Limpiadores", cant: "CANT_LIMPIADORES", meta: "META_LIMPIADORES" },
-        { label: "Aros de sol", cant: "CANT_AROS_SOL", meta: "META_AROS_SOL" },
-        { label: "Credilentes", cant: "CANT_CREDIMAS", meta: "META_CREDIMAS" },
-        { label: "Lentes contacto", cant: "CANT_LC", meta: "META_LC" },
-        { label: "Asistencia hogar", cant: "CANT_ASIS_HOGAR", meta: "META_ASIS_HOGAR" },
-        { label: "Asistencia salud", cant: "CANT_ASIS_SALUD", meta: "META_ASIS_SALUD" },
-        { label: "Servicio completo", cant: "CANT_SERV_COMP", meta: "META_SERV_COMP" },
-        { label: "Servicio express", cant: "CANT_SERV_EXPRESS", meta: "META_SERV_EXPRESS" },
-        { label: "Solucion LC", cant: "CANT_SOL_LC", meta: "META_SOL_LC" },
+    const metricas = [
+        ["Convencionales", "CANT_CONVENCIONALES", "META_CONVENCIONALES"],
+        ["Digitales", "CANT_DIGITALES", "META_DIGITALES"],
+        ["Limpiadores", "CANT_LIMPIADORES", "META_LIMPIADORES"],
+        ["Aros de sol", "CANT_AROS_SOL", "META_AROS_SOL"],
+        ["Credilentes", "CANT_CREDIMAS", "META_CREDIMAS"],
+        ["Lentes de contacto", "CANT_LC", "META_LC"],
+        ["Asistencia hogar", "CANT_ASIS_HOGAR", "META_ASIS_HOGAR"],
+        ["Asistencia salud", "CANT_ASIS_SALUD", "META_ASIS_SALUD"],
+        ["Servicio completo", "CANT_SERV_COMP", "META_SERV_COMP"],
+        ["Servicio express", "CANT_SERV_EXPRESS", "META_SERV_EXPRESS"],
+        ["Solucion LC", "CANT_SOL_LC", "META_SOL_LC"],
     ]
 
-    const resultadosMat = METRICAS.map((m) => ({
-        label: m.label,
-        cantidad: sumBy(dataMat, m.cant),
-        porcentaje: calcularPorcentaje(dataMat, m.cant, m.meta),
-    }))
-
-    const resultadosBeo = METRICAS.map((m) => ({
-        label: m.label,
-        cantidad: sumBy(dataBeo, m.cant),
-        porcentaje: calcularPorcentaje(dataBeo, m.cant, m.meta),
-    }))
-
-    const totalesMat = {
-        unidades: resultadosMat.reduce((sum, r) => sum + r.cantidad, 0),
-        porcentaje: calcularPorcentaje(dataMat, "CANT_TOTAL_KPI", "META_GLOBAL"),
+    const getColorPorCumplimiento = (pct) => {
+        if (pct === 0) return COLOR_SIN
+        if (pct >= 100) return "#fadbdd"
+        if (pct >= 80) return "#f19da1"
+        if (pct >= 60) return "#e75a61"
+        if (pct >= 40) return "#d61f28"
+        return "#98161c"
     }
 
-    const totalesBeo = {
-        unidades: resultadosBeo.reduce((sum, r) => sum + r.cantidad, 0),
-        porcentaje: calcularPorcentaje(dataBeo, "CANT_TOTAL_KPI", "META_GLOBAL"),
-    }
-
-    const filasMetricas = resultadosMat.map((r, i) => [
-        construirCeldaMetrica(r.label, r.cantidad, r.porcentaje, getColorCumplimiento(r.porcentaje)),
-        construirCeldaMetrica(resultadosBeo[i].label, resultadosBeo[i].cantidad, resultadosBeo[i].porcentaje, getColorCumplimiento(resultadosBeo[i].porcentaje)),
-    ])
-
-    const BarraLeyenda = () => ({
-        columns: LEYENDA_CUMPLIMIENTO.map((l) => ({
-            width: "auto",
-            stack: [
-                { canvas: [{ type: "rect", x: 0, y: 0, w: 14, h: 9, color: l.color }], margin: [2, 0, 2, 0] },
-                { text: l.label, fontSize: 6, color: GRIS_TEXTO, alignment: "center" },
-            ],
-        })),
-        margin: [0, 8, 0, 0],
+    const resultados = metricas.map(([label, cantKey, metaKey]) => {
+        const cantMat = sumBy(dataMat, cantKey)
+        const metaMat = sumBy(dataMat, metaKey)
+        const cantBeo = sumBy(dataBeo, cantKey)
+        const metaBeo = sumBy(dataBeo, metaKey)
+        const pctMat = metaMat > 0 ? Math.round((cantMat / metaMat) * 100) : 0
+        const pctBeo = metaBeo > 0 ? Math.round((cantBeo / metaBeo) * 100) : 0
+        return { label, cantMat, cantBeo, pctMat, pctBeo }
     })
 
-    return [
-        ...bannerComparativo("SUCURSALES QUE CUMPLIERON", "Unidades vendidas vs meta por categoria"),
+    const totalCantMat = resultados.reduce((a, r) => a + r.cantMat, 0)
+    const totalCantBeo = resultados.reduce((a, r) => a + r.cantBeo, 0)
+    const totalMetaMat = sumBy(dataMat, "META_GLOBAL")
+    const totalMetaBeo = sumBy(dataBeo, "META_GLOBAL")
+    const totalPctMat = totalMetaMat > 0 ? Math.round((totalCantMat / totalMetaMat) * 100) : 0
+    const totalPctBeo = totalMetaBeo > 0 ? Math.round((totalCantBeo / totalMetaBeo) * 100) : 0
+
+    const maximo = Math.max(...resultados.map((r) => Math.max(r.cantMat, r.cantBeo)), 1)
+
+    const filas = resultados.map((r) => [
         {
-            columns: [
+            stack: [
                 {
-                    width: "50%",
-                    stack: [
-                        construirTarjetaResumen("MATAMOROS", ROJO, totalesMat.unidades, totalesMat.porcentaje, getColorCumplimiento(totalesMat.porcentaje)),
-                        BarraLeyenda(),
+                    columns: [
+                        { text: r.label, color: BLANCO, bold: true, fontSize: 8, alignment: "right" },
+                        { text: String(r.cantMat), color: BLANCO, bold: true, fontSize: 9, width: 22, alignment: "right" },
                     ],
+                    margin: [0, 0, 0, 2],
                 },
                 {
-                    width: "50%",
-                    stack: [
-                        construirTarjetaResumen("VEOMAS", AZUL, totalesBeo.unidades, totalesBeo.porcentaje, getColorCumplimiento(totalesBeo.porcentaje)),
-                        BarraLeyenda(),
+                    canvas: [
+                        { type: "rect", x: 240 - Math.max(1, (r.cantMat / maximo) * 240), y: 0, w: Math.max(1, (r.cantMat / maximo) * 240), h: 8, r: 4, color: getColorPorCumplimiento(r.pctMat) },
                     ],
                 },
             ],
-            margin: [0, 0, 0, 8],
+            fillColor: ROJO,
+            margin: [12, 8, 12, 8],
         },
         {
-            table: { widths: ["50%", "50%"], body: filasMetricas },
+            stack: [
+                {
+                    columns: [
+                        { text: String(r.cantBeo), color: BLANCO, bold: true, fontSize: 9, width: 22 },
+                        { text: r.label, color: BLANCO, bold: true, fontSize: 8 },
+                    ],
+                    margin: [0, 0, 0, 2],
+                },
+                {
+                    canvas: [{ type: "rect", x: 0, y: 0, w: Math.max(1, (r.cantBeo / maximo) * 240), h: 8, r: 4, color: getColorPorCumplimiento(r.pctBeo) }],
+                },
+            ],
+            fillColor: AZUL,
+            margin: [12, 8, 12, 8],
+        },
+    ])
+
+    return [
+        ...bannerComparativo("SUCURSALES QUE CUMPLIERON", "Sucursales con meta asignada que alcanzaron o superaron el objetivo", true),
+        tablaComparativa(
+            [{ text: String(totalCantMat), color: BLANCO, bold: true, fontSize: 20, alignment: "center" }, { text: totalPctMat + "% global", color: BLANCO, fontSize: 8, alignment: "center" }],
+            [{ text: String(totalCantBeo), color: BLANCO, bold: true, fontSize: 20, alignment: "center" }, { text: totalPctBeo + "% global", color: BLANCO, fontSize: 8, alignment: "center" }],
+        ),
+        {
+            table: { widths: ["50%", "50%"], body: filas },
             layout: { defaultBorder: false },
+            margin: [0, 6, 0, 0],
         },
     ]
 }
