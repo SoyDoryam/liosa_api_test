@@ -1005,6 +1005,7 @@ function generarMapa(data) {
                     else depNormal[departamento]++;
                 });
 
+                let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
                 const max = Math.max(...Object.values(depTotales), 1);
 
                 const deptBarData = departamentosMapa.map((dep) => {
