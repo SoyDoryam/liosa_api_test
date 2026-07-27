@@ -140,5 +140,18 @@
   "viewBox": {
     "ancho": 1162,
     "alto": 1114
+  },
+  "gestion": {
+    "tipos": [
+      { "nombre": "COMP", "color": "#1A407F" },
+      { "nombre": "CREDI", "color": "#B30000" },
+      { "nombre": "EMPRESA", "color": "#006666" },
+      { "nombre": "FERIA", "color": "#F9A825" },
+      { "nombre": "INSS", "color": "#7B1FA2" },
+      { "nombre": "MINED", "color": "#00796B" },
+      { "nombre": "MINSA", "color": "#E64A19" },
+      { "nombre": "PARTI", "color": "#455A64" },
+      { "nombre": "PRODU", "color": "#C62828" }
+    ]
   }
 }
