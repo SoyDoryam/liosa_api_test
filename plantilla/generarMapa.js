@@ -321,6 +321,26 @@ function oscurecerColor(hex, porcentaje) {
     );
 }
 
+function mezclarDosColores(color1, color2, ratio) {
+    const r1 = parseInt(color1.substring(1, 3), 16);
+    const g1 = parseInt(color1.substring(3, 5), 16);
+    const b1 = parseInt(color1.substring(5, 7), 16);
+    const r2 = parseInt(color2.substring(1, 3), 16);
+    const g2 = parseInt(color2.substring(3, 5), 16);
+    const b2 = parseInt(color2.substring(5, 7), 16);
+    const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
+    const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
+    const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+    return "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0");
+}
+
+function pintarDepartamentoConGradiente(svg, id, color1, color2, ratio, intensidad) {
+    const colorMix = mezclarDosColores(color1, color2, ratio);
+    const pctIntensidad = intensidad / 100;
+    const blended = oscurecerColor(colorMix, (1 - pctIntensidad) * 0.7);
+    return pintarDepartamento(svg, id, blended);
+}
+
 function generarTonos(hex) {
     const tonos = [];
     for (let i = 0; i < 10; i++) {
@@ -729,7 +749,7 @@ function paginaOrdenExpresVsNormal(data) {
 
         Object.entries(resumen).forEach(([deptId, cantidad]) => {
             const pct = Math.round((cantidad / max) * 100);
-            const colorPct = pct >= 50 ? color : mezclarColor(color, 0.4);
+            const colorPct = getColorTema(color, pct);
             svg = pintarDepartamento(svg, deptId, colorPct);
         });
 
@@ -959,6 +979,108 @@ function generarMapa(data) {
                                     },
                                 ],
                                 margin: [0, 10, 0, 0],
+                            },
+                        ],
+                    },
+                ];
+            })(),
+
+            // ==================== PAGINA 5: 50% NORMAL + 50% EXPRES ====================
+            ...(() => {
+                const depTotales = {};
+                const depExpress = {};
+                const depNormal = {};
+
+                departamentosMapa.forEach((dep) => {
+                    depTotales[dep] = 0;
+                    depExpress[dep] = 0;
+                    depNormal[dep] = 0;
+                });
+
+                data.forEach((item) => {
+                    const departamento = sucursalDepartamento[item.sucursal];
+                    if (!departamento || departamento === "SIN_MAPA") return;
+                    depTotales[departamento]++;
+                    if (item.express === 1) depExpress[departamento]++;
+                    else depNormal[departamento]++;
+                });
+
+                let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
+                const max = Math.max(...Object.values(depTotales), 1);
+
+                Object.entries(depTotales).forEach(([deptId, total]) => {
+                    const n = depNormal[deptId];
+                    const e = depExpress[deptId];
+                    const t = n + e;
+                    const pctNormal = t > 0 ? (n / t) * 100 : 50;
+                    const pctExpres = t > 0 ? (e / t) * 100 : 50;
+                    const pct = Math.round((t / max) * 100);
+                    const intensidad = getColorTema(VERDE_NORMAL, pct);
+
+                    const colorMix = mezclarDosColores(VERDE_NORMAL, AMARILLO_EXPRES, pctExpres / 100);
+                    svg = pintarDepartamentoConGradiente(svg, deptId, VERDE_NORMAL, AMARILLO_EXPRES, pctExpres / 100, intensidad);
+                });
+
+                const filas = departamentosMapa.map((dep) => {
+                    const nombre = dep.replace("DEPARTAMENTO_", "");
+                    const n = depNormal[dep];
+                    const e = depExpress[dep];
+                    const t = n + e;
+                    const pE = t > 0 ? Math.round((e / t) * 100) : 50;
+                    const pN = t > 0 ? 100 - pE : 50;
+                    return [
+                        { text: nombre, fontSize: 8, color: ROSA.grisTexto },
+                        { text: t.toLocaleString(), fontSize: 8, alignment: "center", bold: true, color: ROSA.grisTexto },
+                        {
+                            columns: [
+                                { text: pN + "%", fontSize: 7, alignment: "center", color: VERDE_NORMAL, width: "50%" },
+                                { text: pE + "%", fontSize: 7, alignment: "center", color: AMARILLO_EXPRES, width: "50%" },
+                            ]
+                        },
+                        {
+                            canvas: [
+                                { type: "rect", x: 0, y: 0, w: 60, h: 8, color: ROSA.grisClaro },
+                                { type: "rect", x: 0, y: 0, w: (pE / 100) * 60, h: 8, color: AMARILLO_EXPRES },
+                            ]
+                        },
+                    ];
+                });
+
+                return [
+                    {
+                        pageBreak: "before",
+                        stack: [
+                            {
+                                table: {
+                                    widths: ["*", 60, 80, 65],
+                                    body: [
+                                        [
+                                            { text: "DEPARTAMENTO", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto },
+                                            { text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" },
+                                            { text: "NORMAL / EXPRÉS", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" },
+                                            { text: "DISTRIBUCIÓN", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" },
+                                        ],
+                                        ...filas,
+                                    ],
+                                },
+                                layout: { defaultBorder: false, paddingTop: () => 2, paddingBottom: () => 2, paddingLeft: () => 3, paddingRight: () => 3 },
+                            },
+                            {
+                                text: "DISTRIBUCIÓN NORMAL vs EXPRÉS POR DEPARTAMENTO",
+                                bold: true,
+                                fontSize: 12,
+                                color: ROSA.grisTexto,
+                                alignment: "center",
+                                margin: [0, 10, 0, 8],
+                            },
+                            { svg: svg, fit: [500, 340], alignment: "center" },
+                            {
+                                columns: [
+                                    { text: "■ Verde = Normal", fontSize: 9, color: VERDE_NORMAL, alignment: "center", width: "25%" },
+                                    { text: "■ Amarillo = Exprés", fontSize: 9, color: AMARILLO_EXPRES, alignment: "center", width: "25%" },
+                                    { text: "■ Intensidad = Cantidad total", fontSize: 9, color: ROSA.grisTexto, alignment: "center", width: "50%" },
+                                ],
+                                margin: [0, 8, 0, 0],
                             },
                         ],
                     },
