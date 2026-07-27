@@ -589,6 +589,27 @@ function graficoBarras(resumenDepartamento, base) {
     };
 }
 
+const VERDE_NORMAL = "#006666";
+const AMARILLO_EXPRES = "#F9A825";
+
+function generarSvgGradiente(resumenTotales) {
+    let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
+    const max = Math.max(...Object.values(resumenTotales), 1);
+
+    Object.entries(resumenTotales).forEach(([deptId, total]) => {
+        const pctTotal = Math.round((total / max) * 100);
+        const intensidad = getColorTema(VERDE_NORMAL, pctTotal);
+        svg = pintarDepartamento(svg, deptId, intensidad);
+    });
+
+    const carpeta = path.join(__dirname, "svggenerados");
+    if (!fs.existsSync(carpeta)) {
+        fs.mkdirSync(carpeta, { recursive: true });
+    }
+    fs.writeFileSync(path.join(carpeta, "ni_gradiente.svg"), svg, "utf8");
+    return svg;
+}
+
 // ============================================================
 // HOJA INFOGRAFICA GENERICA (estilo imagen de referencia)
 // Se aplica a cada mapa, uno por pagina, respetando su color.
@@ -600,6 +621,8 @@ function paginaInfografia({
     subtitulo,
     descripcion,
     primeraPagina = false,
+    usarGradiente = false,
+    dataExpress = null,
 }) {
     const totalOrdenes = Object.values(resumenDepartamento).reduce(
         (a, b) => a + b,
@@ -617,11 +640,36 @@ function paginaInfografia({
     const lider = ordenados[0] || ["N/D", 0];
 
     const oscuro = oscurecerColor(base, 0.25);
-    const svgTema = pintarMapaTema(resumenDepartamento, base);
-    //   console.log(svgTema)
+    let svgTema = null;
+
+    if (usarGradiente && dataExpress) {
+        svgTema = generarSvgGradiente(resumenDepartamento, dataExpress);
+    } else {
+        svgTema = pintarMapaTema(resumenDepartamento, base);
+    }
+
+    const deptBarData = departamentosMapa.map((dep) => ({
+        dep,
+        nombre: dep.replace("DEPARTAMENTO_", ""),
+        cantidad: resumenDepartamento[dep] || 0,
+    })).filter(d => d.cantidad > 0).sort((a, b) => b.cantidad - a.cantidad);
+
+    const filasTabla = deptBarData.map(({ nombre, cantidad }) => [
+        { text: nombre, fontSize: 7, color: ROSA.grisTexto },
+        { text: cantidad.toLocaleString(), fontSize: 7, alignment: "center", bold: true, color: base },
+    ]);
+
+    const filasTablaResumen = deptBarData.slice(0, 5).map(({ nombre, cantidad }) => {
+        const pct = Math.round((cantidad / totalOrdenes) * 100);
+        return [
+            { text: nombre, fontSize: 7, color: ROSA.grisTexto },
+            { text: cantidad.toLocaleString(), fontSize: 7, alignment: "center", bold: true, color: base },
+            { text: pct + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+        ];
+    });
+
     const bloques = [
         {
-            // Encabezado tipo banner
             table: {
                 widths: ["*", "auto"],
                 body: [
@@ -643,10 +691,7 @@ function paginaInfografia({
                     ],
                 ],
             },
-            layout: {
-                defaultBorder: false,
-                fillColor: () => base,
-            },
+            layout: { defaultBorder: false, fillColor: () => base },
             margin: [0, 0, 0, 4],
         },
 
@@ -659,57 +704,76 @@ function paginaInfografia({
 
         {
             columns: [
-                // Columna izquierda: cifras + leyenda
                 {
-                    width: "30%",
+                    width: "20%",
                     stack: [
-                        tarjetaCifra(totalOrdenes.toLocaleString(), "Órdenes totales", base),
-                        tarjetaCifra(depActivos.toString(), "Departamentos activos", oscuro),
-                        tarjetaCifra(
-                            lider[1].toString(),
-                            "Líder: " + lider[0].replace("DEPARTAMENTO_", ""),
-                            ROSA.grisTexto
-                        ),
                         {
-                            text: "Intensidad de órdenes",
-                            fontSize: 8,
+                            text: "DEPARTAMENTOS",
                             bold: true,
+                            fontSize: 8,
                             color: ROSA.grisTexto,
-                            margin: [0, 6, 0, 0],
+                            margin: [0, 0, 0, 4],
                         },
-                        leyendaGradiente(base),
                         {
-                            text: "Color oscuro = mayor cantidad de órdenes · Gris = sin actividad",
-                            fontSize: 7,
-                            color: ROSA.grisTexto,
-                            margin: [0, 2, 0, 0],
+                            table: {
+                                widths: ["*", 40],
+                                body: [
+                                    [
+                                        { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: base },
+                                        { text: "CANT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: base, alignment: "center" },
+                                    ],
+                                    ...filasTabla,
+                                ],
+                            },
+                            layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
                         },
                     ],
                 },
-
-                // Columna derecha: mapa del tema
                 {
-                    width: "70%",
-                    svg: svgTema,
-                    fit: [520, 300],
-                    alignment: "center",
+                    width: "60%",
+                    stack: [
+                        { svg: svgTema, fit: [400, 280], alignment: "center" },
+                        {
+                            text: usarGradiente ? "■ Verde = Normal · Amarillo = Exprés" : "■ Intensidad según cantidad de órdenes",
+                            fontSize: 7,
+                            color: ROSA.grisTexto,
+                            alignment: "center",
+                            margin: [0, 4, 0, 0],
+                        },
+                    ],
+                },
+                {
+                    width: "20%",
+                    stack: [
+                        {
+                            text: "TOP 5",
+                            bold: true,
+                            fontSize: 8,
+                            color: ROSA.grisTexto,
+                            margin: [0, 0, 0, 4],
+                        },
+                        {
+                            table: {
+                                widths: ["*", 35, 30],
+                                body: [
+                                    [
+                                        { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: base },
+                                        { text: "CANT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: base, alignment: "center" },
+                                        { text: "%", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: base, alignment: "center" },
+                                    ],
+                                    ...filasTablaResumen,
+                                ],
+                            },
+                            layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
+                        },
+                        { text: "Total: " + totalOrdenes.toLocaleString(), fontSize: 7, bold: true, color: base, alignment: "center", margin: [0, 6, 0, 0] },
+                    ],
                 },
             ],
-            columnGap: 10,
+            columnGap: 5,
         },
-
-        {
-            text: "Órdenes por departamento",
-            color: ROSA.grisTexto,
-            fontSize: 10,
-            bold: true,
-            margin: [2, 12, 0, 6],
-        },
-
-        graficoBarras(resumenDepartamento, base),
     ];
 
-    // Salto de pagina antes, salvo la primera hoja del documento
     if (!primeraPagina) {
         bloques[0] = { ...bloques[0], pageBreak: "before" };
     }
@@ -721,9 +785,6 @@ function paginaInfografia({
 // PAGINA 4: ÓRDENES EXPRES VS NORMALES
 // Verde = Normal, Amarillo = Exprés
 // ============================================================
-const VERDE_NORMAL = "#006666";
-const AMARILLO_EXPRES = "#F9A825";
-
 function paginaOrdenExpresVsNormal(data) {
     const depTotales = {};
     const depExpress = {};
@@ -897,16 +958,16 @@ function generarMapa(data) {
             ...paginaInfografia({
                 resumenDepartamento: resumenOcentral,
                 base: "#B30000",
-                titulo: "OCENTRAL (CLIENTE 40) · ÓRDENES POR DEPARTAMENTO",
+                titulo: "MATAMOROS · ÓRDENES POR DEPARTAMENTO",
                 subtitulo: "Infografía · Distribución del cliente",
-                descripcion: "¿Dónde se concentran las órdenes de OCENTRAL?",
+                descripcion: "¿Dónde se concentran las órdenes de MATAMOROS?",
             }),
 
             // ==================== PAGINA 3: VEOMAS (azul) ====================
             ...paginaInfografia({
                 resumenDepartamento: resumenVeomas,
                 base: "#1A407F",
-                titulo: "VEOMAS (CLIENTE 10) · ÓRDENES POR DEPARTAMENTO",
+                titulo: "VEOMAS · ÓRDENES POR DEPARTAMENTO",
                 subtitulo: "Infografía · Distribución del cliente",
                 descripcion: "¿Dónde se concentran las órdenes de VEOMAS?",
             }),
