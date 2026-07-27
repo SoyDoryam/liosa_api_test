@@ -1223,38 +1223,76 @@ function generarMapa(data) {
                     const nombre = dep.replace("DEPARTAMENTO_", "");
                     const gestData = depGestion[dep];
                     const total = Object.values(gestData).reduce((a, b) => a + b, 0);
-                    let gestCount = {};
-                    let gestionDominante = null;
-                    let maxCount = 0;
+                    const gestCount = {};
                     gestionArray.forEach(g => {
-                        const c = gestData[g] || 0;
-                        gestCount[g] = c;
-                        if (c > maxCount) {
-                            maxCount = c;
-                            gestionDominante = g;
-                        }
+                        gestCount[g] = gestData[g] || 0;
                     });
-                    const colorDominante = gestionDominante ? coloresGestion[gestionArray.indexOf(gestionDominante) % coloresGestion.length] : "#CCCCCC";
-                    return { dep, nombre, total, gestCount, gestionDominante, colorDominante, maxCount };
+                    return { dep, nombre, total, gestCount };
                 }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
 
                 const totalGlobal = deptBarData.reduce((acc, d) => acc + d.total, 0);
 
                 let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
-                const max = Math.max(...deptBarData.map(d => d.total), 1);
 
-                deptBarData.forEach(({ dep, colorDominante, total }) => {
-                    const pct = Math.round((total / max) * 100);
-                    const colorPct = getColorTema(colorDominante, pct);
-                    svg = pintarDepartamento(svg, dep, colorPct);
+                deptBarData.forEach(({ dep, total, gestCount }) => {
+                    if (total === 0) return;
+                    const gKeys = gestionArray.filter(g => gestCount[g] > 0);
+                    if (gKeys.length === 0) return;
+
+                    let gradId = `grad_pie_${dep.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                    let stops = '';
+                    let offset = 0;
+
+                    gKeys.forEach((g, idx) => {
+                        const cant = gestCount[g];
+                        const pct = (cant / total) * 100;
+                        const color = coloresGestion[gestionArray.indexOf(g) % coloresGestion.length];
+                        const nextOffset = offset + pct;
+                        stops += `<stop offset="${offset}%" style="stop-color:${color};stop-opacity:1" />`;
+                        stops += `<stop offset="${nextOffset}%" style="stop-color:${color};stop-opacity:1" />`;
+                        offset = nextOffset;
+                    });
+
+                    const gradDef = `<linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">${stops}</linearGradient>`;
+                    svg = svg.replace(/<defs>/i, '<defs>' + gradDef);
+
+                    const regexGrupo = new RegExp(`<g([^>]*)id="${dep}"([^>]*)>([\\s\\S]*?)</g>`, "i");
+                    if (regexGrupo.test(svg)) {
+                        svg = svg.replace(regexGrupo, (match, antes, despues, contenido) => {
+                            contenido = contenido.replace(/<(path|polygon|rect|circle)([^>]*)\/?>/gi, (tag, tipo, atributos) => {
+                                atributos = atributos.replace(/class="[^"]*"/g, "").replace(/fill="[^"]*"/g, "").replace(/stroke="[^"]*"/g, "").replace(/\/$/, "").trim();
+                                return `<${tipo} ${atributos} fill="url(#${gradId})" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>`;
+                            });
+                            return `<g id="${dep}">${contenido}</g>`;
+                        });
+                    }
+                    const regexPath = new RegExp(`<path([^>]*)id="${dep}"([^>]*)/>`, "i");
+                    if (regexPath.test(svg)) {
+                        svg = svg.replace(regexPath, (match, antes, despues) => {
+                            let atributos = (antes + despues).replace(/class="[^"]*"/g, "").replace(/fill="[^"]*"/g, "").replace(/stroke="[^"]*"/g, "").replace(/\/$/, "").trim();
+                            return `<path id="${dep}" ${atributos} fill="url(#${gradId})" stroke="#FFFFFF" stroke-width="2"/>`;
+                        });
+                    }
                 });
 
-                const labelSvg = deptBarData.map(({ dep }) => {
+                const labelSvg = deptBarData.map(({ dep, total, gestCount }) => {
                     const centroide = deptCentroidesFijos[dep];
                     if (!centroide) return '';
                     const style = deptLabelStyles[dep] || { color: "#FFFFFF", fontSize: 6 };
                     const label = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
-                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="${style.fontSize}" fill="${style.color}" text-anchor="middle" font-weight="bold">${label}</text>`;
+
+                    const lines = [`${total}`];
+                    const gKeys = gestionArray.filter(g => gestCount[g] > 0).slice(0, 3);
+                    gKeys.forEach(g => {
+                        const pct = Math.round((gestCount[g] / total) * 100);
+                        lines.push(`${pct}%`);
+                    });
+
+                    const textLines = lines.map((l, i) =>
+                        `<tspan x="${centroide.x.toFixed(1)}" dy="${i === 0 ? 0 : 8}">${l}</tspan>`
+                    ).join('');
+
+                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="5" fill="#FFFFFF" text-anchor="middle" font-weight="bold">${textLines}</text>`;
                 }).join('');
 
                 const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
@@ -1322,6 +1360,13 @@ function generarMapa(data) {
                                         margin: [0, 0, 0, 8],
                                     },
                                     { svg: svgWithLabels, fit: [480, 320], alignment: "center" },
+                                    {
+                                        text: "TOTAL · % PRINCIPAL",
+                                        fontSize: 6,
+                                        color: ROSA.grisTexto,
+                                        alignment: "center",
+                                        margin: [0, 4, 0, 0],
+                                    },
                                     {
                                         columns: gestionArray.map((g, i) => ({
                                             text: `■ ${g.substring(0, 10)}`,
