@@ -933,6 +933,8 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
 
         Object.entries(deptCumplimiento).forEach(([deptId, cumplimiento]) => {
             const color = getColorCumplimiento(cumplimiento)
+
+            // Buscar y reemplazar en <g> tags
             const regexGrupo = new RegExp(`<g([^>]*)id="${deptId}"([^>]*)>([\\s\\S]*?)</g>`, "i")
             if (regexGrupo.test(svg)) {
                 svg = svg.replace(regexGrupo, (match, antes, despues, contenido) => {
@@ -941,6 +943,20 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
                         return `<${tipo} ${atributos} fill="${color}" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>`
                     })
                     return `<g id="${deptId}">${contenido}</g>`
+                })
+            }
+
+            // Buscar y reemplazar en <path> tags solos
+            const regexPath = new RegExp(`<path([^>]*)id="${deptId}"([^>]*)/>`, "i")
+            if (regexPath.test(svg)) {
+                svg = svg.replace(regexPath, (match, antes, despues) => {
+                    let atributos = (antes + despues)
+                        .replace(/class="[^"]*"/g, "")
+                        .replace(/fill="[^"]*"/g, "")
+                        .replace(/stroke="[^"]*"/g, "")
+                        .replace(/\/$/, "")
+                        .trim()
+                    return `<path id="${deptId}" ${atributos} fill="${color}" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>`
                 })
             }
         })
