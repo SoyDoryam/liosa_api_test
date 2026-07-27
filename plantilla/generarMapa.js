@@ -1064,6 +1064,53 @@ function generarMapa(data) {
                     ];
                 });
 
+                const deptCentroidesFijos = {
+                    "DEPARTAMENTO_MANAGUA": { x: 490, y: 710 },
+                    "DEPARTAMENTO_CHINANDEGA": { x: 60, y: 600 },
+                    "DEPARTAMENTO_LEON": { x: 85, y: 655 },
+                    "DEPARTAMENTO_MASAYA": { x: 430, y: 760 },
+                    "DEPARTAMENTO_GRANADA": { x: 420, y: 820 },
+                    "DEPARTAMENTO_CARAZO": { x: 455, y: 830 },
+                    "DEPARTAMENTO_RIVAS": { x: 430, y: 965 },
+                    "DEPARTAMENTO_ESTELI": { x: 220, y: 620 },
+                    "DEPARTAMENTO_MATAGALPA": { x: 325, y: 650 },
+                    "DEPARTAMENTO_JINOTEGA": { x: 280, y: 540 },
+                    "DEPARTAMENTO_NUEVA_SEGOVIA": { x: 200, y: 320 },
+                    "DEPARTAMENTO_MADRIZ": { x: 150, y: 380 },
+                    "DEPARTAMENTO_CHONTALES": { x: 545, y: 705 },
+                    "DEPARTAMENTO_BOACO": { x: 520, y: 650 },
+                    "DEPARTAMENTO_RIO_SAN_JUAN": { x: 560, y: 985 },
+                    "DEPARTAMENTO_RACCN": { x: 840, y: 500 },
+                    "DEPARTAMENTO_RACCS": { x: 850, y: 780 },
+                };
+
+                function extraerPathDelDepto(svg, dep) {
+                    const regexPath = new RegExp(`<path[^>]*id="${dep}"[^>]*d="([^"]+)"`);
+                    const match = svg.match(regexPath);
+                    if (match) return match[1];
+                    const regexGrupo = new RegExp(`<g([^>]*)id="${dep}"([^>]*)>([\\s\\S]*?)</g>`, "i");
+                    const matchG = svg.match(regexGrupo);
+                    if (matchG) {
+                        const contenido = matchG[3];
+                        const pathMatch = contenido.match(/<(?:path|polygon)([^>]*)\/?>/i);
+                        if (pathMatch) {
+                            const allD = pathMatch[1].match(/d="([^"]+)"/g);
+                            if (allD && allD.length > 0) {
+                                const lastD = allD[allD.length - 1];
+                                return lastD.substring(3, lastD.length - 1);
+                            }
+                            const dMatch = pathMatch[1].match(/points="([^"]*)"/);
+                            return dMatch ? dMatch[1] : null;
+                        }
+                    }
+                    return null;
+                }
+
+                const deptCentroides = {};
+                deptBarData.forEach(({ dep }) => {
+                    deptCentroides[dep] = deptCentroidesFijos[dep] || { x: 50, y: 50 };
+                });
+
                 deptBarData.forEach(({ dep, pN }) => {
                     const pctN = pN;
                     const gradId = `grad_${dep.replace(/[^a-zA-Z0-9]/g, '_')}`;
@@ -1088,30 +1135,23 @@ function generarMapa(data) {
                     }
                 });
 
-                const deptLabels = {
-                    "DEPARTAMENTO_MANAGUA": { x: 165, y: 105, label: "Managua" },
-                    "DEPARTAMENTO_CHINANDEGA": { x: 60, y: 60, label: "Chinandega" },
-                    "DEPARTAMENTO_LEON": { x: 85, y: 82, label: "León" },
-                    "DEPARTAMENTO_MASAYA": { x: 152, y: 130, label: "Masaya" },
-                    "DEPARTAMENTO_GRANADA": { x: 148, y: 158, label: "Granada" },
-                    "DEPARTAMENTO_CARAZO": { x: 170, y: 148, label: "Carazo" },
-                    "DEPARTAMENTO_RIVAS": { x: 148, y: 192, label: "Rivas" },
-                    "DEPARTAMENTO_ESTELI": { x: 108, y: 65, label: "Estelí" },
-                    "DEPARTAMENTO_MATAGALPA": { x: 135, y: 82, label: "Matagalpa" },
-                    "DEPARTAMENTO_JINOTEGA": { x: 118, y: 48, label: "Jinotega" },
-                    "DEPARTAMENTO_NUEVA_SEGOVIA": { x: 95, y: 28, label: "Nva. Segovia" },
-                    "DEPARTAMENTO_MADRIZ": { x: 72, y: 40, label: "Madriz" },
-                    "DEPARTAMENTO_CHONTALES": { x: 205, y: 108, label: "Chontales" },
-                    "DEPARTAMENTO_BOACO": { x: 195, y: 92, label: "Boaco" },
-                    "DEPARTAMENTO_RIO_SAN_JUAN": { x: 198, y: 185, label: "Río San Juan" },
-                    "DEPARTAMENTO_RACCN": { x: 295, y: 60, label: "RACCN" },
-                    "DEPARTAMENTO_RACCS": { x: 302, y: 140, label: "RACCS" },
+                const deptLabelsNombres = {
+                    "DEPARTAMENTO_MANAGUA": "Managua", "DEPARTAMENTO_CHINANDEGA": "Chinandega",
+                    "DEPARTAMENTO_LEON": "León", "DEPARTAMENTO_MASAYA": "Masaya",
+                    "DEPARTAMENTO_GRANADA": "Granada", "DEPARTAMENTO_CARAZO": "Carazo",
+                    "DEPARTAMENTO_RIVAS": "Rivas", "DEPARTAMENTO_ESTELI": "Estelí",
+                    "DEPARTAMENTO_MATAGALPA": "Matagalpa", "DEPARTAMENTO_JINOTEGA": "Jinotega",
+                    "DEPARTAMENTO_NUEVA_SEGOVIA": "Nva.Segovia", "DEPARTAMENTO_MADRIZ": "Madriz",
+                    "DEPARTAMENTO_CHONTALES": "Chontales", "DEPARTAMENTO_BOACO": "Boaco",
+                    "DEPARTAMENTO_RIO_SAN_JUAN": "Río San Juan", "DEPARTAMENTO_RACCN": "RACCN",
+                    "DEPARTAMENTO_RACCS": "RACCS",
                 };
 
                 const labelSvg = deptBarData.map(({ dep }) => {
-                    const info = deptLabels[dep];
-                    if (!info) return '';
-                    return `<text x="${info.x}" y="${info.y}" font-family="Arial" font-size="7" fill="#333333" text-anchor="middle" font-weight="bold">${info.label}</text>`;
+                    const centroide = deptCentroides[dep];
+                    if (!centroide) return '';
+                    const label = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
+                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="6" fill="#333333" text-anchor="middle" font-weight="bold">${label}</text>`;
                 }).join('');
 
                 const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
