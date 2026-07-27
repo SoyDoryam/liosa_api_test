@@ -1195,6 +1195,109 @@ function generarMapa(data) {
                     },
                 ];
             })(),
+
+            // ==================== PAGINA 6: GESTION POR DEPARTAMENTO ====================
+            ...(() => {
+                const depGestion = {};
+                const gestionTipos = new Set();
+
+                departamentosMapa.forEach((dep) => {
+                    depGestion[dep] = {};
+                });
+
+                data.forEach((item) => {
+                    const departamento = sucursalDepartamento[item.sucursal];
+                    if (!departamento || departamento === "SIN_MAPA") return;
+                    const gestion = item.tipo_gestion || "SIN GESTION";
+                    gestionTipos.add(gestion);
+                    if (!depGestion[departamento][gestion]) {
+                        depGestion[departamento][gestion] = 0;
+                    }
+                    depGestion[departamento][gestion]++;
+                });
+
+                const gestionArray = Array.from(gestionTipos).sort();
+                const deptBarData = departamentosMapa.map((dep) => {
+                    const nombre = dep.replace("DEPARTAMENTO_", "");
+                    const gestData = depGestion[dep];
+                    const total = Object.values(gestData).reduce((a, b) => a + b, 0);
+                    const gestCount = {};
+                    gestionArray.forEach(g => {
+                        gestCount[g] = gestData[g] || 0;
+                    });
+                    return { dep, nombre, total, gestCount };
+                }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
+
+                const totalGlobal = deptBarData.reduce((acc, d) => acc + d.total, 0);
+
+                const coloresGestion = ["#1A407F", "#B30000", "#006666", "#F9A825", "#7B1FA2", "#00796B", "#E64A19", "#455A64"];
+
+                const widths = ["*", 50, ...gestionArray.map(() => 50)];
+                const headerRow = [
+                    { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto },
+                    { text: "TOT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
+                    ...gestionArray.map((g, i) => ({
+                        text: g.substring(0, 6).toUpperCase(),
+                        color: "#FFFFFF",
+                        bold: true,
+                        fontSize: 5,
+                        fillColor: coloresGestion[i % coloresGestion.length],
+                        alignment: "center"
+                    }))
+                ];
+
+                const filas = deptBarData.map(({ nombre, total, gestCount }) => {
+                    const row = [
+                        { text: nombre, fontSize: 7, color: ROSA.grisTexto },
+                        { text: total.toLocaleString(), fontSize: 7, alignment: "center", bold: true, color: ROSA.grisTexto },
+                    ];
+                    gestionArray.forEach((g, i) => {
+                        const cant = gestCount[g];
+                        const pct = total > 0 ? Math.round((cant / total) * 100) : 0;
+                        row.push({
+                            text: pct > 0 ? `${cant}` : "-",
+                            fontSize: 6,
+                            alignment: "center",
+                            color: coloresGestion[i % coloresGestion.length],
+                            bold: cant > 0
+                        });
+                    });
+                    return row;
+                });
+
+                return [
+                    {
+                        pageBreak: "before",
+                        stack: [
+                            {
+                                table: {
+                                    widths: widths,
+                                    body: [headerRow, ...filas],
+                                },
+                                layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
+                            },
+                            {
+                                columns: gestionArray.map((g, i) => ({
+                                    text: `■ ${g.substring(0, 12)}`,
+                                    fontSize: 6,
+                                    color: coloresGestion[i % coloresGestion.length],
+                                    alignment: "center",
+                                    width: `${Math.floor(100 / gestionArray.length)}%`
+                                })),
+                                margin: [0, 8, 0, 0],
+                            },
+                            {
+                                text: `Total órdenes: ${totalGlobal.toLocaleString()} | Departamentos: ${deptBarData.length} | Tipos de gestión: ${gestionArray.length}`,
+                                fontSize: 8,
+                                bold: true,
+                                color: ROSA.grisTexto,
+                                alignment: "center",
+                                margin: [0, 10, 0, 0],
+                            },
+                        ],
+                    },
+                ];
+            })(),
         ],
     };
 }
