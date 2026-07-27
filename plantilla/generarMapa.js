@@ -1012,13 +1012,11 @@ function generarMapa(data) {
                     const n = depNormal[deptId];
                     const e = depExpress[deptId];
                     const t = n + e;
-                    const pctNormal = t > 0 ? (n / t) * 100 : 50;
                     const pctExpres = t > 0 ? (e / t) * 100 : 50;
-                    const pct = Math.round((t / max) * 100);
-                    const intensidad = getColorTema(VERDE_NORMAL, pct);
-
-                    const colorMix = mezclarDosColores(VERDE_NORMAL, AMARILLO_EXPRES, pctExpres / 100);
-                    svg = pintarDepartamentoConGradiente(svg, deptId, VERDE_NORMAL, AMARILLO_EXPRES, pctExpres / 100, intensidad);
+                    const pctTotal = Math.round((t / max) * 100);
+                    const colorMix = getColorTema(VERDE_NORMAL, pctTotal);
+                    const colorFinal = mezclarDosColores(colorMix, AMARILLO_EXPRES, pctExpres / 100);
+                    svg = pintarDepartamento(svg, deptId, colorFinal);
                 });
 
                 const filas = departamentosMapa.map((dep) => {
@@ -1039,8 +1037,8 @@ function generarMapa(data) {
                         },
                         {
                             canvas: [
-                                { type: "rect", x: 0, y: 0, w: 60, h: 8, color: ROSA.grisClaro },
-                                { type: "rect", x: 0, y: 0, w: (pE / 100) * 60, h: 8, color: AMARILLO_EXPRES },
+                                { type: "rect", x: 0, y: 0, w: 60, h: 8, color: AMARILLO_EXPRES },
+                                { type: "rect", x: 0, y: 0, w: (pN / 100) * 60, h: 8, color: VERDE_NORMAL },
                             ]
                         },
                     ];
@@ -1049,38 +1047,48 @@ function generarMapa(data) {
                 return [
                     {
                         pageBreak: "before",
-                        stack: [
+                        columns: [
                             {
-                                table: {
-                                    widths: ["*", 60, 80, 65],
-                                    body: [
-                                        [
-                                            { text: "DEPARTAMENTO", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto },
-                                            { text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" },
-                                            { text: "NORMAL / EXPRÉS", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" },
-                                            { text: "DISTRIBUCIÓN", color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" },
-                                        ],
-                                        ...filas,
-                                    ],
-                                },
-                                layout: { defaultBorder: false, paddingTop: () => 2, paddingBottom: () => 2, paddingLeft: () => 3, paddingRight: () => 3 },
-                            },
-                            {
-                                text: "DISTRIBUCIÓN NORMAL vs EXPRÉS POR DEPARTAMENTO",
-                                bold: true,
-                                fontSize: 12,
-                                color: ROSA.grisTexto,
-                                alignment: "center",
-                                margin: [0, 10, 0, 8],
-                            },
-                            { svg: svg, fit: [500, 340], alignment: "center" },
-                            {
-                                columns: [
-                                    { text: "■ Verde = Normal", fontSize: 9, color: VERDE_NORMAL, alignment: "center", width: "25%" },
-                                    { text: "■ Amarillo = Exprés", fontSize: 9, color: AMARILLO_EXPRES, alignment: "center", width: "25%" },
-                                    { text: "■ Intensidad = Cantidad total", fontSize: 9, color: ROSA.grisTexto, alignment: "center", width: "50%" },
+                                width: "20%",
+                                stack: [
+                                    {
+                                        table: {
+                                            widths: ["*", 50, 60, 60],
+                                            body: [
+                                                [
+                                                    { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto },
+                                                    { text: "TOT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
+                                                    { text: "N/E", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
+                                                    { text: "DIST", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
+                                                ],
+                                                ...filas,
+                                            ],
+                                        },
+                                        layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
+                                    },
                                 ],
-                                margin: [0, 8, 0, 0],
+                            },
+                            {
+                                width: "80%",
+                                stack: [
+                                    {
+                                        text: "DISTRIBUCIÓN NORMAL vs EXPRÉS POR DEPARTAMENTO",
+                                        bold: true,
+                                        fontSize: 12,
+                                        color: ROSA.grisTexto,
+                                        alignment: "center",
+                                        margin: [0, 0, 0, 8],
+                                    },
+                                    { svg: svg, fit: [480, 320], alignment: "center" },
+                                    {
+                                        columns: [
+                                            { text: "■ Verde = Normal", fontSize: 8, color: VERDE_NORMAL, alignment: "center", width: "25%" },
+                                            { text: "■ Amarillo = Exprés", fontSize: 8, color: AMARILLO_EXPRES, alignment: "center", width: "25%" },
+                                            { text: "■ Color mapa = Mezcla según % Exprés", fontSize: 8, color: ROSA.grisTexto, alignment: "center", width: "50%" },
+                                        ],
+                                        margin: [0, 6, 0, 0],
+                                    },
+                                ],
                             },
                         ],
                     },
