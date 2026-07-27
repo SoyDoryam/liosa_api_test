@@ -1331,13 +1331,11 @@ function generarMapa(data) {
                     }
                 });
 
-                const filas = deptBarData.map(({ nombre, t, m, v, pM, pV }) => [
+                const filas = deptBarData.map(({ nombre, t, m, v }) => [
                     { text: nombre, fontSize: 7, color: ROSA.grisTexto },
                     { text: t.toString(), fontSize: 7, alignment: "center", color: ROSA.grisTexto },
                     { text: m.toLocaleString(), fontSize: 7, alignment: "center", color: "#B30000", bold: true },
-                    { text: pM + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
                     { text: v.toLocaleString(), fontSize: 7, alignment: "center", color: "#1A407F", bold: true },
-                    { text: pV + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
                 ]);
 
                 const deptCentroidesFijos = {
