@@ -63,6 +63,11 @@ dist/
 build/
 
 # =========================
+# SVGs generados automáticamente
+# =========================
+plantilla/svggenerados/*.svg
+
+# =========================
 # OneDrive
 # =========================
 ~$*
