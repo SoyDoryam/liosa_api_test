@@ -93,6 +93,10 @@ const sucursalDepartamento = {
     "VM ALTAMIRA": "DEPARTAMENTO_MANAGUA",
     "VMCIUDAD_SANDINO": "DEPARTAMENTO_MANAGUA",
     "VMCIUDAD SANDINO": "DEPARTAMENTO_MANAGUA",
+    "LAS PRADERAS": "DEPARTAMENTO_MANAGUA",
+    "PLAZA TONALLI": "DEPARTAMENTO_MANAGUA",
+    "METRO PLAZA": "DEPARTAMENTO_MANAGUA",
+    "CIUDAD SANDINO": "DEPARTAMENTO_MANAGUA",
 
     // GRANADA
     "GRANADA": "DEPARTAMENTO_GRANADA",
@@ -109,6 +113,7 @@ const sucursalDepartamento = {
     "PUERTO CABEZA": "DEPARTAMENTO_RACCN",
     "SIUNA": "DEPARTAMENTO_RACCN",
     "NUEVA GUINEA": "DEPARTAMENTO_RACCS",
+    "RAMA": "DEPARTAMENTO_RACCS",
 
     "SAN CARLOS": "DEPARTAMENTO_RIO_SAN_JUAN",
 
@@ -692,6 +697,119 @@ function paginaInfografia({
     return bloques;
 }
 
+// ============================================================
+// PAGINA 4: ÓRDENES EXPRES VS NORMALES
+// Verde = Normal, Amarillo = Exprés
+// ============================================================
+const VERDE_NORMAL = "#2E7D32";
+const AMARILLO_EXPRES = "#F9A825";
+
+function paginaOrdenExpresVsNormal(data) {
+    const depTotales = {};
+    const depExpress = {};
+    const depNormal = {};
+
+    departamentosMapa.forEach((dep) => {
+        depTotales[dep] = 0;
+        depExpress[dep] = 0;
+        depNormal[dep] = 0;
+    });
+
+    data.forEach((item) => {
+        const departamento = sucursalDepartamento[item.sucursal];
+        if (!departamento || departamento === "SIN_MAPA") return;
+        depTotales[departamento]++;
+        if (item.express === 1) depExpress[departamento]++;
+        else depNormal[departamento]++;
+    });
+
+    const generarMapaConPorcentaje = (resumen, color) => {
+        let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
+        const max = Math.max(...Object.values(resumen), 1);
+
+        Object.entries(resumen).forEach(([deptId, cantidad]) => {
+            const pct = Math.round((cantidad / max) * 100);
+            const colorPct = pct >= 50 ? color : mezclarColor(color, 0.4);
+            svg = pintarDepartamento(svg, deptId, colorPct);
+        });
+
+        return { svg, resumen };
+    };
+
+    const { svg: svgNormal } = generarMapaConPorcentaje(depNormal, VERDE_NORMAL);
+    const { svg: svgExpres } = generarMapaConPorcentaje(depExpress, AMARILLO_EXPRES);
+
+    const totalNormal = Object.values(depNormal).reduce((a, b) => a + b, 0);
+    const totalExpres = Object.values(depExpress).reduce((a, b) => a + b, 0);
+    const total = totalNormal + totalExpres;
+
+    const filas = departamentosMapa.map((dep) => {
+        const nombre = dep.replace("DEPARTAMENTO_", "");
+        const n = depNormal[dep];
+        const e = depExpress[dep];
+        const t = n + e;
+        const pN = t > 0 ? Math.round((n / t) * 100) : 0;
+        const pE = t > 0 ? Math.round((e / t) * 100) : 0;
+        return [
+            { text: nombre, fontSize: 7, color: ROSA.grisTexto },
+            { text: t.toString(), fontSize: 7, alignment: "center", color: ROSA.grisTexto },
+            { text: n.toString(), fontSize: 7, alignment: "center", color: VERDE_NORMAL, bold: true },
+            { text: pN + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+            { text: e.toString(), fontSize: 7, alignment: "center", color: AMARILLO_EXPRES, bold: true },
+            { text: pE + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+        ];
+    });
+
+    return [
+        {
+            table: {
+                widths: ["*", "auto", "auto", 40, "auto", 40],
+                body: [
+                    [
+                        { text: "DEPARTAMENTO", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto },
+                        { text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto, alignment: "center" },
+                        { text: "NORMAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: VERDE_NORMAL, alignment: "center" },
+                        { text: "%", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: VERDE_NORMAL, alignment: "center" },
+                        { text: "EXPRÉS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: AMARILLO_EXPRES, alignment: "center" },
+                        { text: "%", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: AMARILLO_EXPRES, alignment: "center" },
+                    ],
+                    ...filas,
+                ],
+            },
+            layout: {
+                defaultBorder: false,
+                paddingTop: () => 2,
+                paddingBottom: () => 2,
+                paddingLeft: () => 3,
+                paddingRight: () => 3,
+                fillColor: (rowIndex) => (rowIndex > 0 && rowIndex % 2 === 0 ? ROSA.grisClaro : null),
+            },
+            margin: [0, 10, 0, 0],
+        },
+        {
+            columns: [
+                {
+                    width: "50%",
+                    stack: [
+                        { text: "ÓRDENES NORMALES", bold: true, fontSize: 11, color: VERDE_NORMAL, alignment: "center", margin: [0, 0, 0, 6] },
+                        { text: `${totalNormal.toLocaleString()} órdenes (${Math.round((totalNormal / total) * 100)}%)`, fontSize: 9, color: ROSA.grisTexto, alignment: "center", margin: [0, 0, 0, 4] },
+                        { svg: svgNormal, fit: [320, 220], alignment: "center" },
+                    ],
+                },
+                {
+                    width: "50%",
+                    stack: [
+                        { text: "ÓRDENES EXPRÉS", bold: true, fontSize: 11, color: AMARILLO_EXPRES, alignment: "center", margin: [0, 0, 0, 6] },
+                        { text: `${totalExpres.toLocaleString()} órdenes (${Math.round((totalExpres / total) * 100)}%)`, fontSize: 9, color: ROSA.grisTexto, alignment: "center", margin: [0, 0, 0, 4] },
+                        { svg: svgExpres, fit: [320, 220], alignment: "center" },
+                    ],
+                },
+            ],
+            margin: [0, 10, 0, 0],
+        },
+    ];
+}
+
 // Generar mapa
 function generarMapa(data) {
 
@@ -744,6 +862,108 @@ function generarMapa(data) {
                 subtitulo: "Infografía · Distribución del cliente",
                 descripcion: "¿Dónde se concentran las órdenes de VEOMAS?",
             }),
+
+            // ==================== PAGINA 4: EXPRES VS NORMAL ====================
+            ...(() => {
+                const depTotales = {};
+                const depExpress = {};
+                const depNormal = {};
+
+                departamentosMapa.forEach((dep) => {
+                    depTotales[dep] = 0;
+                    depExpress[dep] = 0;
+                    depNormal[dep] = 0;
+                });
+
+                data.forEach((item) => {
+                    const departamento = sucursalDepartamento[item.sucursal];
+                    if (!departamento || departamento === "SIN_MAPA") return;
+                    depTotales[departamento]++;
+                    if (item.express === 1) depExpress[departamento]++;
+                    else depNormal[departamento]++;
+                });
+
+                const generarSvgMapa = (resumen, color) => {
+                    let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
+                    const max = Math.max(...Object.values(resumen), 1);
+                    Object.entries(resumen).forEach(([deptId, cantidad]) => {
+                        const pct = Math.round((cantidad / max) * 100);
+                        const colorPct = pct >= 50 ? color : mezclarColor(color, 0.4);
+                        svg = pintarDepartamento(svg, deptId, colorPct);
+                    });
+                    return svg;
+                };
+
+                const svgNormal = generarSvgMapa(depNormal, VERDE_NORMAL);
+                const svgExpres = generarSvgMapa(depExpress, AMARILLO_EXPRES);
+
+                const totalNormal = Object.values(depNormal).reduce((a, b) => a + b, 0);
+                const totalExpres = Object.values(depExpress).reduce((a, b) => a + b, 0);
+                const total = totalNormal + totalExpres;
+
+                const filas = departamentosMapa.map((dep) => {
+                    const nombre = dep.replace("DEPARTAMENTO_", "");
+                    const n = depNormal[dep];
+                    const e = depExpress[dep];
+                    const t = n + e;
+                    const pN = t > 0 ? Math.round((n / t) * 100) : 0;
+                    const pE = t > 0 ? Math.round((e / t) * 100) : 0;
+                    return [
+                        { text: nombre, fontSize: 7, color: ROSA.grisTexto },
+                        { text: t.toString(), fontSize: 7, alignment: "center", color: ROSA.grisTexto },
+                        { text: n.toString(), fontSize: 7, alignment: "center", color: VERDE_NORMAL, bold: true },
+                        { text: pN + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+                        { text: e.toString(), fontSize: 7, alignment: "center", color: AMARILLO_EXPRES, bold: true },
+                        { text: pE + "%", fontSize: 6, alignment: "center", color: ROSA.grisTexto },
+                    ];
+                });
+
+                return [
+                    {
+                        pageBreak: "before",
+                        stack: [
+                            {
+                                table: {
+                                    widths: ["*", "auto", "auto", 40, "auto", 40],
+                                    body: [
+                                        [
+                                            { text: "DEPARTAMENTO", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto },
+                                            { text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto, alignment: "center" },
+                                            { text: "NORMAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: VERDE_NORMAL, alignment: "center" },
+                                            { text: "%", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: VERDE_NORMAL, alignment: "center" },
+                                            { text: "EXPRÉS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: AMARILLO_EXPRES, alignment: "center" },
+                                            { text: "%", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: AMARILLO_EXPRES, alignment: "center" },
+                                        ],
+                                        ...filas,
+                                    ],
+                                },
+                                layout: { defaultBorder: false, paddingTop: () => 2, paddingBottom: () => 2, paddingLeft: () => 3, paddingRight: () => 3 },
+                            },
+                            {
+                                columns: [
+                                    {
+                                        width: "50%",
+                                        stack: [
+                                            { text: "ÓRDENES NORMALES", bold: true, fontSize: 11, color: VERDE_NORMAL, alignment: "center", margin: [0, 0, 0, 6] },
+                                            { text: `${totalNormal.toLocaleString()} órdenes (${Math.round((totalNormal / total) * 100)}%)`, fontSize: 9, color: ROSA.grisTexto, alignment: "center", margin: [0, 0, 0, 4] },
+                                            { svg: svgNormal, fit: [320, 220], alignment: "center" },
+                                        ],
+                                    },
+                                    {
+                                        width: "50%",
+                                        stack: [
+                                            { text: "ÓRDENES EXPRÉS", bold: true, fontSize: 11, color: AMARILLO_EXPRES, alignment: "center", margin: [0, 0, 0, 6] },
+                                            { text: `${totalExpres.toLocaleString()} órdenes (${Math.round((totalExpres / total) * 100)}%)`, fontSize: 9, color: ROSA.grisTexto, alignment: "center", margin: [0, 0, 0, 4] },
+                                            { svg: svgExpres, fit: [320, 220], alignment: "center" },
+                                        ],
+                                    },
+                                ],
+                                margin: [0, 10, 0, 0],
+                            },
+                        ],
+                    },
+                ];
+            })(),
         ],
     };
 }
