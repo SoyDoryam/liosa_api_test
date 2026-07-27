@@ -554,33 +554,17 @@ function paginaMetricasCumplidas(dataMat, dataBeo) {
         ["Solucion LC", "CANT_SOL_LC", "META_SOL_LC"],
     ]
 
-    const getColorPorCumplimiento = (pct) => {
-        if (pct === 0) return COLOR_SIN
-        if (pct >= 100) return "#fadbdd"
-        if (pct >= 80) return "#f19da1"
-        if (pct >= 60) return "#e75a61"
-        if (pct >= 40) return "#d61f28"
-        return "#98161c"
-    }
+    const contar = (data, cantKey, metaKey) =>
+        data.filter((s) => num(s[metaKey]) > 0 && num(s[cantKey]) >= num(s[metaKey])).length
 
-    const resultados = metricas.map(([label, cantKey, metaKey]) => {
-        const cantMat = sumBy(dataMat, cantKey)
-        const metaMat = sumBy(dataMat, metaKey)
-        const cantBeo = sumBy(dataBeo, cantKey)
-        const metaBeo = sumBy(dataBeo, metaKey)
-        const pctMat = metaMat > 0 ? Math.round((cantMat / metaMat) * 100) : 0
-        const pctBeo = metaBeo > 0 ? Math.round((cantBeo / metaBeo) * 100) : 0
-        return { label, cantMat, cantBeo, pctMat, pctBeo }
-    })
-
-    const totalCantMat = resultados.reduce((a, r) => a + r.cantMat, 0)
-    const totalCantBeo = resultados.reduce((a, r) => a + r.cantBeo, 0)
-    const totalMetaMat = sumBy(dataMat, "META_GLOBAL")
-    const totalMetaBeo = sumBy(dataBeo, "META_GLOBAL")
-    const totalPctMat = totalMetaMat > 0 ? Math.round((totalCantMat / totalMetaMat) * 100) : 0
-    const totalPctBeo = totalMetaBeo > 0 ? Math.round((totalCantBeo / totalMetaBeo) * 100) : 0
-
-    const maximo = Math.max(...resultados.map((r) => Math.max(r.cantMat, r.cantBeo)), 1)
+    const resultados = metricas.map(([label, cantKey, metaKey]) => ({
+        label,
+        mat: contar(dataMat, cantKey, metaKey),
+        beo: contar(dataBeo, cantKey, metaKey),
+    }))
+    const maximo = Math.max(...resultados.map((r) => Math.max(r.mat, r.beo)), 1)
+    const totalMat = resultados.reduce((a, r) => a + r.mat, 0)
+    const totalBeo = resultados.reduce((a, r) => a + r.beo, 0)
 
     const filas = resultados.map((r) => [
         {
@@ -588,13 +572,13 @@ function paginaMetricasCumplidas(dataMat, dataBeo) {
                 {
                     columns: [
                         { text: r.label, color: BLANCO, bold: true, fontSize: 8, alignment: "right" },
-                        { text: String(r.cantMat), color: BLANCO, bold: true, fontSize: 9, width: 22, alignment: "right" },
+                        { text: String(r.mat), color: BLANCO, bold: true, fontSize: 9, width: 22, alignment: "right" },
                     ],
                     margin: [0, 0, 0, 2],
                 },
                 {
                     canvas: [
-                        { type: "rect", x: 240 - Math.max(1, (r.cantMat / maximo) * 240), y: 0, w: Math.max(1, (r.cantMat / maximo) * 240), h: 8, r: 4, color: getColorPorCumplimiento(r.pctMat) },
+                        { type: "rect", x: 240 - Math.max(1, (r.mat / maximo) * 240), y: 0, w: Math.max(1, (r.mat / maximo) * 240), h: 8, r: 4, color: BLANCO },
                     ],
                 },
             ],
@@ -605,13 +589,13 @@ function paginaMetricasCumplidas(dataMat, dataBeo) {
             stack: [
                 {
                     columns: [
-                        { text: String(r.cantBeo), color: BLANCO, bold: true, fontSize: 9, width: 22 },
+                        { text: String(r.beo), color: BLANCO, bold: true, fontSize: 9, width: 22 },
                         { text: r.label, color: BLANCO, bold: true, fontSize: 8 },
                     ],
                     margin: [0, 0, 0, 2],
                 },
                 {
-                    canvas: [{ type: "rect", x: 0, y: 0, w: Math.max(1, (r.cantBeo / maximo) * 240), h: 8, r: 4, color: getColorPorCumplimiento(r.pctBeo) }],
+                    canvas: [{ type: "rect", x: 0, y: 0, w: Math.max(1, (r.beo / maximo) * 240), h: 8, r: 4, color: BLANCO }],
                 },
             ],
             fillColor: AZUL,
@@ -622,8 +606,8 @@ function paginaMetricasCumplidas(dataMat, dataBeo) {
     return [
         ...bannerComparativo("SUCURSALES QUE CUMPLIERON", "Sucursales con meta asignada que alcanzaron o superaron el objetivo", true),
         tablaComparativa(
-            [{ text: String(totalCantMat), color: BLANCO, bold: true, fontSize: 20, alignment: "center" }, { text: totalPctMat + "% global", color: BLANCO, fontSize: 8, alignment: "center" }],
-            [{ text: String(totalCantBeo), color: BLANCO, bold: true, fontSize: 20, alignment: "center" }, { text: totalPctBeo + "% global", color: BLANCO, fontSize: 8, alignment: "center" }],
+            [{ text: String(totalMat), color: BLANCO, bold: true, fontSize: 20, alignment: "center" }, { text: "cumplimientos", color: BLANCO, fontSize: 8, alignment: "center" }],
+            [{ text: String(totalBeo), color: BLANCO, bold: true, fontSize: 20, alignment: "center" }, { text: "cumplimientos", color: BLANCO, fontSize: 8, alignment: "center" }],
         ),
         {
             table: { widths: ["50%", "50%"], body: filas },
