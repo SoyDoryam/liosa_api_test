@@ -1217,30 +1217,59 @@ function generarMapa(data) {
                 });
 
                 const gestionArray = Array.from(gestionTipos).sort();
+                const coloresGestion = ["#1A407F", "#B30000", "#006666", "#F9A825", "#7B1FA2", "#00796B", "#E64A19", "#455A64"];
+
                 const deptBarData = departamentosMapa.map((dep) => {
                     const nombre = dep.replace("DEPARTAMENTO_", "");
                     const gestData = depGestion[dep];
                     const total = Object.values(gestData).reduce((a, b) => a + b, 0);
-                    const gestCount = {};
+                    let gestCount = {};
+                    let gestionDominante = null;
+                    let maxCount = 0;
                     gestionArray.forEach(g => {
-                        gestCount[g] = gestData[g] || 0;
+                        const c = gestData[g] || 0;
+                        gestCount[g] = c;
+                        if (c > maxCount) {
+                            maxCount = c;
+                            gestionDominante = g;
+                        }
                     });
-                    return { dep, nombre, total, gestCount };
+                    const colorDominante = gestionDominante ? coloresGestion[gestionArray.indexOf(gestionDominante) % coloresGestion.length] : "#CCCCCC";
+                    return { dep, nombre, total, gestCount, gestionDominante, colorDominante, maxCount };
                 }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
 
                 const totalGlobal = deptBarData.reduce((acc, d) => acc + d.total, 0);
 
-                const coloresGestion = ["#1A407F", "#B30000", "#006666", "#F9A825", "#7B1FA2", "#00796B", "#E64A19", "#455A64"];
+                let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
+                const max = Math.max(...deptBarData.map(d => d.total), 1);
 
-                const widths = ["*", 50, ...gestionArray.map(() => 50)];
+                deptBarData.forEach(({ dep, colorDominante, total }) => {
+                    const pct = Math.round((total / max) * 100);
+                    const colorPct = getColorTema(colorDominante, pct);
+                    svg = pintarDepartamento(svg, dep, colorPct);
+                });
+
+                const labelSvg = deptBarData.map(({ dep }) => {
+                    const centroide = deptCentroidesFijos[dep];
+                    if (!centroide) return '';
+                    const style = deptLabelStyles[dep] || { color: "#FFFFFF", fontSize: 6 };
+                    const label = deptLabelsNombres[dep] || dep.replace("DEPARTAMENTO_", "");
+                    return `<text x="${centroide.x.toFixed(1)}" y="${centroide.y.toFixed(1)}" font-family="Arial" font-size="${style.fontSize}" fill="${style.color}" text-anchor="middle" font-weight="bold">${label}</text>`;
+                }).join('');
+
+                const svgWithLabels = svg.replace('</svg>', `${labelSvg}</svg>`);
+
+                fs.writeFileSync(path.join(__dirname, "svggenerados", "ni_gestion.svg"), svgWithLabels, "utf8");
+
+                const widths = ["*", 50, ...gestionArray.map(() => 35)];
                 const headerRow = [
                     { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto },
                     { text: "TOT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
                     ...gestionArray.map((g, i) => ({
-                        text: g.substring(0, 6).toUpperCase(),
+                        text: g.substring(0, 5).toUpperCase(),
                         color: "#FFFFFF",
                         bold: true,
-                        fontSize: 5,
+                        fontSize: 4,
                         fillColor: coloresGestion[i % coloresGestion.length],
                         alignment: "center"
                     }))
@@ -1248,15 +1277,15 @@ function generarMapa(data) {
 
                 const filas = deptBarData.map(({ nombre, total, gestCount }) => {
                     const row = [
-                        { text: nombre, fontSize: 7, color: ROSA.grisTexto },
-                        { text: total.toLocaleString(), fontSize: 7, alignment: "center", bold: true, color: ROSA.grisTexto },
+                        { text: nombre, fontSize: 6, color: ROSA.grisTexto },
+                        { text: total.toLocaleString(), fontSize: 6, alignment: "center", bold: true, color: ROSA.grisTexto },
                     ];
                     gestionArray.forEach((g, i) => {
                         const cant = gestCount[g];
                         const pct = total > 0 ? Math.round((cant / total) * 100) : 0;
                         row.push({
                             text: pct > 0 ? `${cant}` : "-",
-                            fontSize: 6,
+                            fontSize: 5,
                             alignment: "center",
                             color: coloresGestion[i % coloresGestion.length],
                             bold: cant > 0
@@ -1268,31 +1297,42 @@ function generarMapa(data) {
                 return [
                     {
                         pageBreak: "before",
-                        stack: [
+                        columns: [
                             {
-                                table: {
-                                    widths: widths,
-                                    body: [headerRow, ...filas],
-                                },
-                                layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
+                                width: "20%",
+                                stack: [
+                                    {
+                                        table: {
+                                            widths: widths,
+                                            body: [headerRow, ...filas],
+                                        },
+                                        layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
+                                    },
+                                ],
                             },
                             {
-                                columns: gestionArray.map((g, i) => ({
-                                    text: `■ ${g.substring(0, 12)}`,
-                                    fontSize: 6,
-                                    color: coloresGestion[i % coloresGestion.length],
-                                    alignment: "center",
-                                    width: `${Math.floor(100 / gestionArray.length)}%`
-                                })),
-                                margin: [0, 8, 0, 0],
-                            },
-                            {
-                                text: `Total órdenes: ${totalGlobal.toLocaleString()} | Departamentos: ${deptBarData.length} | Tipos de gestión: ${gestionArray.length}`,
-                                fontSize: 8,
-                                bold: true,
-                                color: ROSA.grisTexto,
-                                alignment: "center",
-                                margin: [0, 10, 0, 0],
+                                width: "80%",
+                                stack: [
+                                    {
+                                        text: "DISTRIBUCIÓN POR TIPO DE GESTIÓN",
+                                        bold: true,
+                                        fontSize: 12,
+                                        color: ROSA.grisTexto,
+                                        alignment: "center",
+                                        margin: [0, 0, 0, 8],
+                                    },
+                                    { svg: svgWithLabels, fit: [480, 320], alignment: "center" },
+                                    {
+                                        columns: gestionArray.map((g, i) => ({
+                                            text: `■ ${g.substring(0, 10)}`,
+                                            fontSize: 6,
+                                            color: coloresGestion[i % coloresGestion.length],
+                                            alignment: "center",
+                                            width: `${Math.floor(100 / gestionArray.length)}%`
+                                        })),
+                                        margin: [0, 6, 0, 0],
+                                    },
+                                ],
                             },
                         ],
                     },
