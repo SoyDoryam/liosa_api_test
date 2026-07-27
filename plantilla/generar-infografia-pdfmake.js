@@ -887,7 +887,7 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
     }
 
     // Generar mapa para cada cadena
-    const generarMapaCumplimiento = (data) => {
+    const generarMapaCumplimiento = (data, colorBase) => {
         const fs = require("fs")
         const path = require("path")
         let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8")
@@ -922,17 +922,17 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
             deptCumplimiento[dept] = deptData[dept].meta > 0 ? Math.round((deptData[dept].venta / deptData[dept].meta) * 100) : 0
         })
 
-        const getColorCumplimiento = (pct) => {
+        const getColorCumplimientoLocal = (pct) => {
             if (pct === 0) return COLOR_SIN
-            if (pct >= 100) return "#fadbdd"
-            if (pct >= 80) return "#f19da1"
-            if (pct >= 60) return "#e75a61"
-            if (pct >= 40) return "#d61f28"
-            return "#98161c"
+            if (pct >= 100) return colorBase === ROJO ? "#fadbdd" : "#a3c9e2"
+            if (pct >= 80) return colorBase === ROJO ? "#f19da1" : "#7eb8da"
+            if (pct >= 60) return colorBase === ROJO ? "#e75a61" : "#5aa8d1"
+            if (pct >= 40) return colorBase === ROJO ? "#d61f28" : "#2980b9"
+            return colorBase === ROJO ? "#98161c" : "#1a5276"
         }
 
         Object.entries(deptCumplimiento).forEach(([deptId, cumplimiento]) => {
-            const color = getColorCumplimiento(cumplimiento)
+            const color = getColorCumplimientoLocal(cumplimiento)
 
             // Buscar y reemplazar en <g> tags
             const regexGrupo = new RegExp(`<g([^>]*)id="${deptId}"([^>]*)>([\\s\\S]*?)</g>`, "i")
@@ -964,15 +964,24 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
         return svg
     }
 
-    const svgMat = generarMapaCumplimiento(dataMat)
-    const svgBeo = generarMapaCumplimiento(dataBeo)
+    const svgMat = generarMapaCumplimiento(dataMat, ROJO)
+    const svgBeo = generarMapaCumplimiento(dataBeo, AZUL)
 
-    const leyendaColor = [
+    const leyendaColorMat = [
         { color: "#98161c", label: "<40%" },
         { color: "#d61f28", label: "40-59%" },
         { color: "#e75a61", label: "60-79%" },
         { color: "#f19da1", label: "80-99%" },
         { color: "#fadbdd", label: "100%+" },
+        { color: COLOR_SIN, label: "Sin datos" },
+    ]
+
+    const leyendaColorBeo = [
+        { color: "#1a5276", label: "<40%" },
+        { color: "#2980b9", label: "40-59%" },
+        { color: "#5aa8d1", label: "60-79%" },
+        { color: "#7eb8da", label: "80-99%" },
+        { color: "#a3c9e2", label: "100%+" },
         { color: COLOR_SIN, label: "Sin datos" },
     ]
 
@@ -1013,7 +1022,7 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
                         { text: "MATAMOROS", bold: true, fontSize: 12, color: ROJO, alignment: "center", margin: [0, 0, 0, 6] },
                         { svg: svgMat, fit: [340, 240], alignment: "center" },
                         {
-                            columns: leyendaColor.map((l) => ({
+                            columns: leyendaColorMat.map((l) => ({
                                 width: "auto",
                                 stack: [
                                     { canvas: [{ type: "rect", x: 0, y: 0, w: 10, h: 6, color: l.color }], margin: [1, 0, 1, 0] },
@@ -1030,7 +1039,7 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
                         { text: "VEOMAS", bold: true, fontSize: 12, color: AZUL, alignment: "center", margin: [0, 0, 0, 6] },
                         { svg: svgBeo, fit: [340, 240], alignment: "center" },
                         {
-                            columns: leyendaColor.map((l) => ({
+                            columns: leyendaColorBeo.map((l) => ({
                                 width: "auto",
                                 stack: [
                                     { canvas: [{ type: "rect", x: 0, y: 0, w: 10, h: 6, color: l.color }], margin: [1, 0, 1, 0] },
