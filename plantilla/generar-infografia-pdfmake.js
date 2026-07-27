@@ -863,6 +863,9 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
         if (nombre.includes("MANAGUA") || nombre.includes("BOLONIA") || nombre.includes("METRO") ||
             nombre.includes("CARRETERA") || nombre.includes("LINDA VISTA") || nombre.includes("BELLO HORIZONTE") ||
             nombre.includes("ALTAMIRA") || nombre.includes("LA SABANA") || nombre.includes("ZUMEN") ||
+            nombre.includes("CIUDAD JARDIN") || nombre.includes("MULTI") || nombre.includes("GALERIA") ||
+            nombre.includes("OPTILENS") || nombre.includes("METROPLAZA") || nombre.includes("TONALLI") ||
+            nombre.includes("CALLI") || nombre.includes("PRADERAS") ||
             bodega.startsWith("VM") && (bodega.includes("PLAZA") || bodega.includes("MAYOREO") || bodega.includes("IVAN")))
             return "DEPARTAMENTO_MANAGUA"
         if (nombre.includes("LEON") || bodega.includes("LEON")) return "DEPARTAMENTO_LEON"
@@ -875,13 +878,20 @@ function paginaCumplimientoRegionComparativo(dataMat, dataBeo) {
         if (nombre.includes("RIVAS") || bodega.includes("RIVAS")) return "DEPARTAMENTO_RIVAS"
         if (nombre.includes("JINOTEPE") || nombre.includes("CARAZO") || bodega.includes("JINOTEPE"))
             return "DEPARTAMENTO_CARAZO"
-        if (nombre.includes("BOACO") || bodega.includes("BOACO")) return "DEPARTAMENTO_BOACO"
+        if (nombre.includes("BOACO") || bodega.includes("BOACO") || nombre.includes("CAMOAPA")) return "DEPARTAMENTO_BOACO"
         if (nombre.includes("JUIGALPA") || nombre.includes("CHONTALES") || bodega.includes("JUIGALPA"))
             return "DEPARTAMENTO_CHONTALES"
         if (nombre.includes("SIUNA") || nombre.includes("PUERTO CABEZAS") || bodega.includes("SIUNA"))
             return "DEPARTAMENTO_RACCN"
-        if (nombre.includes("BLUEFIELDS") || bodega.includes("BLUEFIELDS")) return "DEPARTAMENTO_RACCS"
-        if (nombre.includes("OCOTAL") || bodega.includes("OCOTAL")) return "DEPARTAMENTO_NUEVA_SEGOVIA"
+        if (nombre.includes("BLUEFIELDS") || bodega.includes("BLUEFIELDS") || nombre.includes("NUEVA GUINEA") || nombre.includes("EL RAMA") || nombre.includes("BONANZA"))
+            return "DEPARTAMENTO_RACCS"
+        if (nombre.includes("OCOTAL") || bodega.includes("OCOTAL") || nombre.includes("JALAPA")) return "DEPARTAMENTO_NUEVA_SEGOVIA"
+        if (nombre.includes("JINOTEGA") || bodega.includes("JINOTEGA")) return "DEPARTAMENTO_JINOTEGA"
+        if (nombre.includes("SOMOTO") || nombre.includes("MADRIZ")) return "DEPARTAMENTO_MADRIZ"
+        if (nombre.includes("SAN CARLOS") || nombre.includes("DIRIAMBA")) return "DEPARTAMENTO_RIO_SAN_JUAN"
+        if (nombre.includes("NANDAIME")) return "DEPARTAMENTO_GRANADA"
+        if (nombre.includes("SEBACO") || nombre.includes("TIPITAPA") || nombre.includes("CIUDAD SANDINO") || nombre.includes("SANTO TOMAS"))
+            return "DEPARTAMENTO_MANAGUA"
 
         return null
     }
