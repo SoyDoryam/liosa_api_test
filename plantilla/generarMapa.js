@@ -1213,6 +1213,7 @@ function generarMapa(data) {
 // ============================================================
 function paginaGestion(data) {
     const depGestion = {};
+    const gestionDataSet = new Set();
 
     departamentosMapa.forEach((dep) => {
         depGestion[dep] = {};
@@ -1222,10 +1223,22 @@ function paginaGestion(data) {
         const departamento = sucursalDepartamento[item.sucursal];
         if (!departamento || departamento === "SIN_MAPA") return;
         const gestion = item.tipo_gestion || "SIN GESTION";
+        gestionDataSet.add(gestion);
         if (!depGestion[departamento][gestion]) {
             depGestion[departamento][gestion] = 0;
         }
         depGestion[departamento][gestion]++;
+    });
+
+    const gestionFromData = Array.from(gestionDataSet).sort();
+    const defaultColors = ["#1A407F", "#B30000", "#006666", "#F9A825", "#7B1FA2", "#00796B", "#E64A19", "#455A64", "#C62828", "#6A1B9A", "#D84315", "#00838F"];
+
+    const gestionFullArray = gestionFromData.map((nombre, idx) => {
+        const configured = gestionArray.find(g => g.nombre.toUpperCase() === nombre.toUpperCase() || nombre.toUpperCase().includes(g.nombre.toUpperCase()));
+        return {
+            nombre: nombre,
+            color: configured ? configured.color : defaultColors[idx % defaultColors.length]
+        };
     });
 
     const deptBarData = departamentosMapa.map((dep) => {
@@ -1233,7 +1246,7 @@ function paginaGestion(data) {
         const gestData = depGestion[dep];
         const total = Object.values(gestData).reduce((a, b) => a + b, 0);
         const gestCount = {};
-        gestionArray.forEach(g => {
+        gestionFullArray.forEach(g => {
             gestCount[g.nombre] = gestData[g.nombre] || 0;
         });
         return { dep, nombre, total, gestCount };
@@ -1243,7 +1256,7 @@ function paginaGestion(data) {
 
     deptBarData.forEach(({ dep, total, gestCount }) => {
         if (total === 0) return;
-        const gKeys = gestionArray.filter(g => gestCount[g.nombre] > 0);
+        const gKeys = gestionFullArray.filter(g => gestCount[g.nombre] > 0);
         if (gKeys.length === 0) return;
 
         let gradId = `grad_pie_${dep.replace(/[^a-zA-Z0-9]/g, '_')}`;
@@ -1287,7 +1300,7 @@ function paginaGestion(data) {
         const style = deptLabelStyles[dep] || { color: "#FFFFFF", fontSize: 6 };
 
         const lines = [`${total}`];
-        gestionArray.filter(g => gestCount[g.nombre] > 0).slice(0, 3).forEach(g => {
+        gestionFullArray.filter(g => gestCount[g.nombre] > 0).slice(0, 3).forEach(g => {
             const pct = Math.round((gestCount[g.nombre] / total) * 100);
             lines.push(`${pct}%`);
         });
@@ -1303,11 +1316,11 @@ function paginaGestion(data) {
 
     fs.writeFileSync(path.join(__dirname, "svggenerados", "ni_gestion.svg"), svgWithLabels, "utf8");
 
-    const widths = ["*", 50, ...gestionArray.map(() => 35)];
+    const widths = ["*", 50, ...gestionFullArray.map(() => 35)];
     const headerRow = [
         { text: "DEP", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto },
         { text: "TOT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: ROSA.grisTexto, alignment: "center" },
-        ...gestionArray.map(g => ({
+        ...gestionFullArray.map(g => ({
             text: g.nombre.substring(0, 5).toUpperCase(),
             color: "#FFFFFF",
             bold: true,
@@ -1322,7 +1335,7 @@ function paginaGestion(data) {
             { text: nombre, fontSize: 6, color: ROSA.grisTexto },
             { text: total.toLocaleString(), fontSize: 6, alignment: "center", bold: true, color: ROSA.grisTexto },
         ];
-        gestionArray.forEach(g => {
+        gestionFullArray.forEach(g => {
             const cant = gestCount[g.nombre];
             const pct = total > 0 ? Math.round((cant / total) * 100) : 0;
             row.push({
@@ -1371,12 +1384,12 @@ function paginaGestion(data) {
                         margin: [0, 4, 0, 0],
                     },
                     {
-                        columns: gestionArray.map(g => ({
+                        columns: gestionFullArray.map(g => ({
                             text: `■ ${g.nombre.substring(0, 10)}`,
                             fontSize: 6,
                             color: g.color,
                             alignment: "center",
-                            width: `${Math.floor(100 / gestionArray.length)}%`
+                            width: `${Math.floor(100 / gestionFullArray.length)}%`
                         })),
                         margin: [0, 6, 0, 0],
                     },
