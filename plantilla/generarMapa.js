@@ -1297,15 +1297,20 @@ function generarMapa(data) {
                 let svg = fs.readFileSync(path.join(__dirname, "NI.svg"), "utf8");
                 const max = Math.max(...Object.values(depTotales), 1);
 
-                deptBarData.forEach(({ dep }) => {
+                const deptBarData = departamentosMapa.map((dep) => {
                     const m = depMatamoros[dep];
                     const v = depVeomas[dep];
                     const t = m + v;
+                    const pM = t > 0 ? Math.round((m / t) * 100) : 0;
+                    const pV = t > 0 ? Math.round((v / t) * 100) : 0;
+                    return { dep, nombre: dep.replace("DEPARTAMENTO_", ""), m, v, t, pM, pV };
+                }).filter(d => d.t > 0).sort((a, b) => b.t - a.t);
+
+                deptBarData.forEach(({ dep, t, v }) => {
                     const pctVeomas = t > 0 ? (v / t) * 100 : 50;
                     const pctTotal = Math.round((t / max) * 100);
-                    const intensidad = getColorTema(VERDE_NORMAL, pctTotal);
                     const gradId = `grad_${dep.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                    const gradDef = `<linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:${VERDE_NORMAL};stop-opacity:1" /><stop offset="${100 - pctVeomas}%" style="stop-color:${VERDE_NORMAL};stop-opacity:1" /><stop offset="${100 - pctVeomas}%" style="stop-color:#1A407F;stop-opacity:1" /><stop offset="100%" style="stop-color:#1A407F;stop-opacity:1" /></linearGradient>`;
+                    const gradDef = `<linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#B30000;stop-opacity:1" /><stop offset="${100 - pctVeomas}%" style="stop-color:#B30000;stop-opacity:1" /><stop offset="${100 - pctVeomas}%" style="stop-color:#1A407F;stop-opacity:1" /><stop offset="100%" style="stop-color:#1A407F;stop-opacity:1" /></linearGradient>`;
                     svg = svg.replace(/<defs>/i, '<defs>' + gradDef);
                     const regexGrupo = new RegExp(`<g([^>]*)id="${dep}"([^>]*)>([\\s\\S]*?)</g>`, "i");
                     if (regexGrupo.test(svg)) {
@@ -1325,15 +1330,6 @@ function generarMapa(data) {
                         });
                     }
                 });
-
-                const deptBarData = departamentosMapa.map((dep) => {
-                    const m = depMatamoros[dep];
-                    const v = depVeomas[dep];
-                    const t = m + v;
-                    const pM = t > 0 ? Math.round((m / t) * 100) : 0;
-                    const pV = t > 0 ? Math.round((v / t) * 100) : 0;
-                    return { dep, nombre: dep.replace("DEPARTAMENTO_", ""), m, v, t, pM, pV };
-                }).filter(d => d.t > 0).sort((a, b) => b.t - a.t);
 
                 const filas = deptBarData.map(({ nombre, t, m, v, pM, pV }) => [
                     { text: nombre, fontSize: 7, color: ROSA.grisTexto },
