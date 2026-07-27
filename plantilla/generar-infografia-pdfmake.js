@@ -699,9 +699,8 @@ function paginaCumplimientoRegion(data, cadena, color) {
             }
         }
         if (!dept) {
-            // Intentar por nombre de sucursal
             const nombre = String(s.NombreSucursal || "").toUpperCase()
-            if (nombre.includes("MANAGUA") || nombre.includes("BOLONIA") || nombre.includes("METRO")) dept = "DEPARTAMENTO_MANAGUA"
+            if (nombre.includes("MANAGUA") || nombre.includes("BOLONIA") || nombre.includes("METRO") || nombre.includes("CARRETERA") || nombre.includes("LINDA VISTA") || nombre.includes("BELLO HORIZONTE") || nombre.includes("ALTAMIRA") || nombre.includes("LA SABANA") || nombre.includes("ZUMEN") || nombre.includes("CIUDAD JARDIN") || nombre.includes("MULTI") || nombre.includes("GALERIA") || nombre.includes("OPTILENS") || nombre.includes("METROPLAZA") || nombre.includes("TONALLI") || nombre.includes("CALLI") || nombre.includes("PRADERAS") || nombre.includes("SEBACO") || nombre.includes("TIPITAPA") || nombre.includes("CIUDAD SANDINO") || nombre.includes("SANTO TOMAS")) dept = "DEPARTAMENTO_MANAGUA"
             else if (nombre.includes("LEON")) dept = "DEPARTAMENTO_LEON"
             else if (nombre.includes("CHINANDEGA")) dept = "DEPARTAMENTO_CHINANDEGA"
             else if (nombre.includes("ESTELI")) dept = "DEPARTAMENTO_ESTELI"
@@ -710,10 +709,15 @@ function paginaCumplimientoRegion(data, cadena, color) {
             else if (nombre.includes("MATAGALPA")) dept = "DEPARTAMENTO_MATAGALPA"
             else if (nombre.includes("RIVAS")) dept = "DEPARTAMENTO_RIVAS"
             else if (nombre.includes("JINOTEPE") || nombre.includes("CARAZO")) dept = "DEPARTAMENTO_CARAZO"
-            else if (nombre.includes("BOACO")) dept = "DEPARTAMENTO_BOACO"
+            else if (nombre.includes("BOACO") || nombre.includes("CAMOAPA")) dept = "DEPARTAMENTO_BOACO"
             else if (nombre.includes("JUIGALPA") || nombre.includes("CHONTALES")) dept = "DEPARTAMENTO_CHONTALES"
             else if (nombre.includes("SIUNA") || nombre.includes("PUERTO CABEZAS")) dept = "DEPARTAMENTO_RACCN"
-            else if (nombre.includes("BLUEFIELDS")) dept = "DEPARTAMENTO_RACCS"
+            else if (nombre.includes("BLUEFIELDS") || nombre.includes("NUEVA GUINEA") || nombre.includes("EL RAMA") || nombre.includes("BONANZA")) dept = "DEPARTAMENTO_RACCS"
+            else if (nombre.includes("OCOTAL") || nombre.includes("JALAPA")) dept = "DEPARTAMENTO_NUEVA_SEGOVIA"
+            else if (nombre.includes("JINOTEGA")) dept = "DEPARTAMENTO_JINOTEGA"
+            else if (nombre.includes("SOMOTO") || nombre.includes("MADRIZ")) dept = "DEPARTAMENTO_MADRIZ"
+            else if (nombre.includes("SAN CARLOS") || nombre.includes("DIRIAMBA")) dept = "DEPARTAMENTO_RIO_SAN_JUAN"
+            else if (nombre.includes("NANDAIME")) dept = "DEPARTAMENTO_GRANADA"
         }
         if (dept && dept !== "SIN_MAPA") {
             if (!deptData[dept]) deptData[dept] = { venta: 0, meta: 0 }
@@ -1104,19 +1108,37 @@ function paginaParticipacionDepartamento(dataMat, dataBeo) {
         "Boaco", "Chontales", "Río San Juan", "Caribe Norte", "Caribe Sur",
     ]
 
-    const ventaPorDep = (data) => {
+    const ventaPorDep = (data, isVeomas = false) => {
         const acc = {}
         departamentos.forEach((d) => (acc[norm(d)] = 0))
         data.forEach((s) => {
-            const key = norm(s.NombreSucursal)
-            const match = departamentos.find((d) => key.includes(norm(d)))
+            const nombre = norm(s.NombreSucursal)
+            const bodega = norm(s.BODEGA || "")
+            let match = null
+
+            if (isVeomas) {
+                const bodegaMap = {
+                    "VMCHINANDEGA": "CHINANDEGA", "VMLEON": "LEÓN", "VMESTELI": "ESTELÍ",
+                    "VMMASAYA": "MASAYA", "VMMATAGALPA": "MATAGALPA", "VMBOACO": "BOACO",
+                    "VMGRANADA": "GRANADA", "VMRIVAS": "RIVAS",
+                    "VMPLAZA ESPANA": "MANAGUA", "VMIVANMT": "MANAGUA", "VMMAYOREO": "MANAGUA",
+                    "VMBELLOHORIZONTE": "MANAGUA", "VMCARRETERA NORTE": "MANAGUA", "VMALTAMIRA": "MANAGUA",
+                    "VMCIUDADSANDINO": "MANAGUA", "VMTIPITAPA": "MANAGUA",
+                    "VMJINOTEPE": "CARAZO", "VMJUIGALPA": "CHONTALES", "VMOCOTAL": "NUEVA SEGOVIA",
+                    "VMRIOBLANCO": "MATAGALPA", "VMMATIGUAS": "MATAGALPA",
+                }
+                match = bodegaMap[bodega] || departamentos.find((d) => nombre.includes(norm(d)))
+            } else {
+                match = departamentos.find((d) => nombre.includes(norm(d)))
+            }
+
             if (match) acc[norm(match)] += num(s.VENTA_TOTAL_KPI)
         })
         return acc
     }
 
-    const ventaMat = ventaPorDep(dataMat)
-    const ventaBeo = ventaPorDep(dataBeo)
+    const ventaMat = ventaPorDep(dataMat, false)
+    const ventaBeo = ventaPorDep(dataBeo, true)
 
     // Generar mapas SVG con colores según venta
     const generarMapaSvg = (ventaPorDep, colorBase) => {
