@@ -1403,7 +1403,7 @@ function generarMapa(data) {
                                                     { text: "MAT", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: "#B30000", alignment: "center" },
                                                     { text: "VEO", color: "#FFFFFF", bold: true, fontSize: 6, fillColor: "#1A407F", alignment: "center" },
                                                 ],
-                                                ...filas,
+                                                ...filas
                                             ],
                                         },
                                         layout: { defaultBorder: false, paddingTop: () => 1, paddingBottom: () => 1, paddingLeft: () => 2, paddingRight: () => 2 },
@@ -1446,9 +1446,18 @@ function generarMapa(data) {
                                         table: {
                                             widths: ["*", 50],
                                             body: [
-                                                [{ text: "MATAMOROS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: "#B30000" }, { text: totalMat.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: "#B30000", alignment: "center" }],
-                                                [{ text: "VEOMAS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: "#1A407F" }, { text: totalVeo.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: "#1A407F", alignment: "center" }],
-                                                [{ text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto }, { text: total.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" }],
+                                                [
+                                                    { text: "MATAMOROS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: "#B30000" },
+                                                    { text: totalMat.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: "#B30000", alignment: "center" }
+                                                ],
+                                                [
+                                                    { text: "VEOMAS", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: "#1A407F" },
+                                                    { text: totalVeo.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: "#1A407F", alignment: "center" }
+                                                ],
+                                                [
+                                                    { text: "TOTAL", color: "#FFFFFF", bold: true, fontSize: 7, fillColor: ROSA.grisTexto },
+                                                    { text: total.toLocaleString(), color: "#FFFFFF", bold: true, fontSize: 8, fillColor: ROSA.grisTexto, alignment: "center" }
+                                                ],
                                             ],
                                         },
                                         layout: { defaultBorder: false, paddingTop: () => 2, paddingBottom: () => 2, paddingLeft: () => 3, paddingRight: () => 3 },
