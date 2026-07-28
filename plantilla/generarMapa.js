@@ -14,6 +14,97 @@ coordsDepartamentos.departamentos.forEach(d => {
 const gestionConfig = coordsDepartamentos.gestion || { tipos: [] };
 const gestionArray = gestionConfig.tipos.map(t => ({ nombre: t.nombre, color: t.color }));
 
+// ============================================================
+// FORENSIC OBSERVABILITY FRAMEWORK
+// Helper para generar metadatos forenses
+// ============================================================
+function generarMetadataForense(data) {
+    const timestamp = new Date().toISOString();
+    const traceId = `nic-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
+    const versionApp = "v2.1.4";
+    const hostId = `liosa-api-${process.env.NODE_ENV || 'development'}`;
+
+    const totalOrdenes = data.length;
+    const clientes = [...new Set(data.map(d => d.cliente))];
+    const gestionTipos = [...new Set(data.map(d => d.tipo_gestion || "SIN GESTION"))];
+    const departamentos = [...new Set(data.filter(d => sucursalDepartamento[d.sucursal]).map(d => sucursalDepartamento[d.sucursal]))];
+
+    const matamorosCount = data.filter(d => d.id_cliente === 40).length;
+    const veomasCount = data.filter(d => d.id_cliente === 10).length;
+    const expressCount = data.filter(d => d.express === 1).length;
+    const normalCount = data.filter(d => d.express !== 1).length;
+
+    return {
+        header: {
+            titulo: "MAPANICARAGUA · FORENSIC TELEMETRY REPORT",
+            subtitulo: "Forensic Observability Framework · Nicaragua Operations"
+        },
+        provenance: {
+            app_version: versionApp,
+            host_id: hostId,
+            trace_id: traceId,
+            timestamp_iso: timestamp,
+            timestamp_local: new Date().toLocaleString('es-NI', { hour12: false })
+        },
+        statistics: {
+            total_ordenes: totalOrdenes,
+            matamoros: { count: matamorosCount, pct: Math.round((matamorosCount / totalOrdenes) * 100) },
+            veomas: { count: veomasCount, pct: Math.round((veomasCount / totalOrdenes) * 100) },
+            express: { count: expressCount, pct: Math.round((expressCount / totalOrdenes) * 100) },
+            normal: { count: normalCount, pct: Math.round((normalCount / totalOrdenes) * 100) }
+        },
+        dimensions: {
+            clientes: clientes.length,
+            gestion_tipos: gestionTipos.length,
+            departamentos_activos: departamentos.length
+        },
+        correlation_ids: {
+            trace_root: traceId,
+            trace_parent: null,
+            span_ids: []
+        }
+    };
+}
+
+function generarBloqueMetadata(meta) {
+    return {
+        table: {
+            widths: [150, "*", 150],
+            body: [
+                [
+                    { text: "TRACE ID", fontSize: 5, color: "#888888", bold: true },
+                    { text: "TIMESTAMP (UTC)", fontSize: 5, color: "#888888", bold: true },
+                    { text: "APP VERSION", fontSize: 5, color: "#888888", bold: true }
+                ],
+                [
+                    { text: meta.provenance.trace_id, fontSize: 6, color: "#1A407F", fontFace: "Courier" },
+                    { text: meta.provenance.timestamp_iso, fontSize: 6, color: "#333333", fontFace: "Courier" },
+                    { text: meta.provenance.app_version, fontSize: 6, color: "#333333", fontFace: "Courier" }
+                ],
+                [
+                    { text: `MATAMOROS: ${meta.statistics.matamoros.count} (${meta.statistics.matamoros.pct}%)`, fontSize: 5, color: "#B30000" },
+                    { text: `VEOMAS: ${meta.statistics.veomas.count} (${meta.statistics.veomas.pct}%)`, fontSize: 5, color: "#1A407F" },
+                    { text: `DEPTS: ${meta.dimensions.departamentos_activos}`, fontSize: 5, color: "#333333" }
+                ]
+            ]
+        },
+        layout: { defaultBorder: true, padding: () => 2 },
+        margin: [0, 0, 0, 8]
+    };
+}
+
+function generarLogForenseEjemplo(meta, tipoAnalisis) {
+    const logEjemplo = {
+        "@timestamp": meta.provenance.timestamp_iso,
+        "trace_id": meta.provenance.trace_id,
+        "client": tipoAnalisis === "matamoros" ? { name: "MATAMOROS", delivery_type: "EXPRES" } : { name: "VEOMAS", delivery_type: "NORMAL" },
+        "location": { department: "MANAGUA", region_code: "NI-MN" },
+        "business_context": { gestion: "MINSA", order_id: "ORD-" + Math.random().toString().slice(2, 10) },
+        "execution": { service: "order-dispatch-api", version: meta.provenance.app_version, duration_ms: 1420, status_code: 200, error_code: null }
+    };
+    return logEjemplo;
+}
+
 // Sucursal -> Departamento
 const sucursalDepartamento = {
     // LEON
@@ -814,11 +905,164 @@ function generarMapa(data) {
     const resumenOcentral = resumenClienteDepartamento(data, 40);
     const resumenVeomas = resumenClienteDepartamento(data, 10);
 
+    const metaForense = generarMetadataForense(data);
+
     return {
         pageSize: "A4",
         pageOrientation: "landscape",
         pageMargins: [10, 10, 10, 10],
+        header: {
+            text: "FORENSIC OBSERVABILITY · NICARAGUA DISTRIBUTION ANALYSIS",
+            style: "header",
+            color: "#888888",
+            fontSize: 8,
+            margin: [10, 5, 10, 0]
+        },
+        footer: (currentPage, pageCount) => ({
+            columns: [
+                { text: `Trace: ${metaForense.provenance.trace_id}`, fontSize: 6, color: "#AAAAAA", margin: [10, 0, 0, 0] },
+                { text: `Generated: ${metaForense.provenance.timestamp_local}`, fontSize: 6, color: "#AAAAAA", alignment: "center" },
+                { text: `Page ${currentPage}/${pageCount}`, fontSize: 6, color: "#AAAAAA", alignment: "right", margin: [0, 0, 10, 0] }
+            ],
+            margin: [0, 5, 0, 0]
+        }),
         content: [
+            // ============================================================
+            // FORENSIC METADATA BLOCK
+            // ============================================================
+            {
+                pageBreak: "before",
+                stack: [
+                    {
+                        text: "FORENSIC OBSERVABILITY FRAMEWORK · TELEMETRY REPORT",
+                        bold: true,
+                        fontSize: 14,
+                        color: "#1A407F",
+                        alignment: "center",
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        text: " provenance · time_coherency · correlation_id · business_context · integrity · custody",
+                        fontSize: 7,
+                        color: "#888888",
+                        alignment: "center",
+                        margin: [0, 0, 0, 15]
+                    },
+                    generarBloqueMetadata(metaForense),
+                    {
+                        text: "DATOS DE PROVENIENCIA",
+                        bold: true,
+                        fontSize: 9,
+                        color: "#333333",
+                        margin: [0, 10, 0, 5]
+                    },
+                    {
+                        table: {
+                            widths: [120, "*", 120, 120],
+                            body: [
+                                [
+                                    { text: "CAMPO", fontSize: 6, bold: true, fillColor: "#1A407F", color: "#FFFFFF" },
+                                    { text: "VALOR", fontSize: 6, bold: true, fillColor: "#1A407F", color: "#FFFFFF" },
+                                    { text: "CAMPO", fontSize: 6, bold: true, fillColor: "#1A407F", color: "#FFFFFF" },
+                                    { text: "VALOR", fontSize: 6, bold: true, fillColor: "#1A407F", color: "#FFFFFF" }
+                                ],
+                                [
+                                    { text: "trace_id", fontSize: 6, color: "#888888" },
+                                    { text: metaForense.provenance.trace_id, fontSize: 6, color: "#1A407F", fontFace: "Courier" },
+                                    { text: "app_version", fontSize: 6, color: "#888888" },
+                                    { text: metaForense.provenance.app_version, fontSize: 6, fontFace: "Courier" }
+                                ],
+                                [
+                                    { text: "timestamp_iso", fontSize: 6, color: "#888888" },
+                                    { text: metaForense.provenance.timestamp_iso, fontSize: 6, fontFace: "Courier" },
+                                    { text: "host_id", fontSize: 6, color: "#888888" },
+                                    { text: metaForense.provenance.host_id, fontSize: 6, fontFace: "Courier" }
+                                ],
+                                [
+                                    { text: "total_ordenes", fontSize: 6, color: "#888888" },
+                                    { text: metaForense.statistics.total_ordenes.toLocaleString(), fontSize: 6, bold: true },
+                                    { text: "departamentos_activos", fontSize: 6, color: "#888888" },
+                                    { text: metaForense.dimensions.departamentos_activos.toString(), fontSize: 6 }
+                                ]
+                            ]
+                        },
+                        layout: { defaultBorder: true, padding: () => 3 }
+                    },
+                    {
+                        text: "DISTRIBUCIÓN MATAMOROS vs VEOMAS",
+                        bold: true,
+                        fontSize: 9,
+                        color: "#333333",
+                        margin: [0, 15, 0, 5]
+                    },
+                    {
+                        columns: [
+                            {
+                                width: "50%",
+                                stack: [
+                                    { text: "■ MATAMOROS", fontSize: 8, color: "#B30000", bold: true },
+                                    { text: `Cantidad: ${metaForense.statistics.matamoros.count.toLocaleString()} (${metaForense.statistics.matamoros.pct}%)`, fontSize: 7, margin: [0, 2, 0, 0] },
+                                    {
+                                        canvas: [{ type: "rect", x: 0, y: 0, w: 200, h: 12, color: "#B30000" }]
+                                    }
+                                ]
+                            },
+                            {
+                                width: "50%",
+                                stack: [
+                                    { text: "■ VEOMAS", fontSize: 8, color: "#1A407F", bold: true },
+                                    { text: `Cantidad: ${metaForense.statistics.veomas.count.toLocaleString()} (${metaForense.statistics.veomas.pct}%)`, fontSize: 7, margin: [0, 2, 0, 0] },
+                                    {
+                                        canvas: [{ type: "rect", x: 0, y: 0, w: 200, h: 12, color: "#1A407F" }]
+                                    }
+                                ]
+                            }
+                        ],
+                        margin: [0, 5, 0, 0]
+                    },
+                    {
+                        text: "EJEMPLO LOG FORENSE (JSON)",
+                        bold: true,
+                        fontSize: 9,
+                        color: "#333333",
+                        margin: [0, 15, 0, 5]
+                    },
+                    {
+                        text: JSON.stringify(generarLogForenseEjemplo(metaForense, "matamoros"), null, 2),
+                        fontSize: 6,
+                        fontFace: "Courier",
+                        color: "#333333",
+                        backgroundColor: "#F5F5F5",
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        text: "DISTRIBUCIÓN NORMAL vs EXPRÉS",
+                        bold: true,
+                        fontSize: 9,
+                        color: "#333333",
+                        margin: [0, 10, 0, 5]
+                    },
+                    {
+                        columns: [
+                            {
+                                width: "50%",
+                                stack: [
+                                    { text: "■ NORMAL", fontSize: 8, color: "#006666", bold: true },
+                                    { text: `Cantidad: ${metaForense.statistics.normal.count.toLocaleString()} (${metaForense.statistics.normal.pct}%)`, fontSize: 7, margin: [0, 2, 0, 0] }
+                                ]
+                            },
+                            {
+                                width: "50%",
+                                stack: [
+                                    { text: "■ EXPRÉS", fontSize: 8, color: "#F9A825", bold: true },
+                                    { text: `Cantidad: ${metaForense.statistics.express.count.toLocaleString()} (${metaForense.statistics.express.pct}%)`, fontSize: 7, margin: [0, 2, 0, 0] }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+
             // ==================== PAGINA 1: GENERAL (verde) ====================
             ...paginaInfografia({
                 resumenDepartamento,
