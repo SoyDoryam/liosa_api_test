@@ -1446,6 +1446,205 @@ function generarMapa(data) {
             // ==================== PAGINA 6: GESTION POR DEPARTAMENTO ====================
             ...paginaGestion(data),
 
+            // ==================== PAGINA 7: INFO ENDPOINT + FORENSIC FRAMEWORK ====================
+            ...(() => {
+                const infoEndpoint = {
+                    endpoint: "/NI",
+                    metodo: "GET",
+                    descripcion: "Genera PDF con distribución de órdenes por departamento en Nicaragua",
+                    origen_datos: "getListadoOrdenes()",
+                    archivo_datos: "mock/ListadoOrdenes.json",
+                    estructura: {
+                        campos: ["cliente", "referencia", "Paciente", "express", "id_tipo_orden", "estado", "id_orden", "num_orden", "fecha_reg", "hora_registro_am_pm", "id_cliente", "sucursal", "tipo_gestion", "total_pares", "total_precio_final", "TECNOLOGIA", "fecha_entrega", "minutos_transcurridos"],
+                        tipos_datos: { cliente: "string", express: "boolean", id_cliente: "number", total_pares: "number", minutos_transcurridos: "number" }
+                    },
+                    paginas: [
+                        "P0: Forensic Observability Metadata",
+                        "P1: Nicaragua General (Verde)",
+                        "P2: Matamoros/Ocentral (Rojo)",
+                        "P3: Veomas (Azul)",
+                        "P4: Normal vs Exprés (Gradiente)",
+                        "P5: Matamoros vs Veomas (Gradiente)",
+                        "P6: Gestión por Departamento (Pie Charts)",
+                        "P7: Info Endpoint + Forensic Framework"
+                    ]
+                };
+
+                const dimensionesForense = [
+                    { nombre: "PROVENANCE", descripcion: "Identificación de origen: client_id, gestion_type, app_version, host_id", ejemplo: "client: MATAMOROS, gestion: MINSA" },
+                    { nombre: "TIME COHERENCY", descripcion: "Timestamps ISO 8601 UTC sincronizados para correlación temporal", ejemplo: "2026-07-27T22:05:49.123Z" },
+                    { nombre: "CORRELATION ID", descripcion: "trace_id para enlazar API → Queue → Dispatch Service", ejemplo: "nic-m1a2b3c4d5e6f7g" },
+                    { nombre: "BUSINESS CONTEXT", descripcion: "Logs estructurados con dimensión negocio + técnica", ejemplo: '{ "gestion": "INSS", "order_id": "..." }' },
+                    { nombre: "INTEGRITY", descripcion: "Streaming de logs hacia repositorio inmutable (S3 WORM)", ejemplo: "logs preservados antes de restart" },
+                    { nombre: "CUSTODY", descripcion: "Audit trail para reconstruir cambios de configuración", ejemplo: "cadena de custodia por operador" }
+                ];
+
+                return [{
+                    pageBreak: "before",
+                    stack: [
+                        {
+                            text: "ENDPOINT INFORMATION · FORENSIC OBSERVABILITY FRAMEWORK",
+                            bold: true,
+                            fontSize: 14,
+                            color: "#1A407F",
+                            alignment: "center",
+                            margin: [0, 0, 0, 10]
+                        },
+                        {
+                            text: "API ENDPOINT: /NI",
+                            bold: true,
+                            fontSize: 11,
+                            color: "#B30000",
+                            margin: [0, 0, 0, 8]
+                        },
+                        {
+                            table: {
+                                widths: [150, "*"],
+                                body: [
+                                    [{ text: "ENDPOINT", fontSize: 7, bold: true, fillColor: "#1A407F", color: "#FFFFFF" }, { text: infoEndpoint.endpoint, fontSize: 7, fillColor: "#1A407F", color: "#FFFFFF" }],
+                                    [{ text: "MÉTODO", fontSize: 7, bold: true }, { text: infoEndpoint.metodo, fontSize: 7 }],
+                                    [{ text: "DESCRIPCIÓN", fontSize: 7, bold: true }, { text: infoEndpoint.descripcion, fontSize: 7 }],
+                                    [{ text: "ORIGEN DATOS", fontSize: 7, bold: true }, { text: infoEndpoint.origen_datos, fontSize: 7, fontFace: "Courier" }],
+                                    [{ text: "ARCHIVO", fontSize: 7, bold: true }, { text: infoEndpoint.archivo_datos, fontSize: 7, fontFace: "Courier" }],
+                                    [{ text: "REGISTROS", fontSize: 7, bold: true }, { text: metaForense.statistics.total_ordenes.toLocaleString(), fontSize: 7, bold: true }]
+                                ]
+                            },
+                            layout: { defaultBorder: true, padding: () => 3 },
+                            margin: [0, 0, 0, 15]
+                        },
+                        {
+                            text: "ESTRUCTURA DE DATOS",
+                            bold: true,
+                            fontSize: 10,
+                            color: "#333333",
+                            margin: [0, 0, 0, 6]
+                        },
+                        {
+                            text: "Campos: cliente, referencia, Paciente, express, id_cliente, sucursal, tipo_gestion, total_pares, total_precio_final, TECNOLOGIA, minutos_transcurridos",
+                            fontSize: 6,
+                            color: "#666666",
+                            margin: [0, 0, 0, 10]
+                        },
+                        {
+                            text: "CONTENIDO DEL REPORTE",
+                            bold: true,
+                            fontSize: 10,
+                            color: "#333333",
+                            margin: [0, 0, 0, 6]
+                        },
+                        {
+                            ul: infoEndpoint.paginas.map(p => ({ text: p, fontSize: 7, color: "#333333" })),
+                            margin: [0, 0, 0, 15]
+                        },
+                        {
+                            text: "FORENSIC OBSERVABILITY FRAMEWORK · 8 DIMENSIONES",
+                            bold: true,
+                            fontSize: 12,
+                            color: "#1A407F",
+                            margin: [0, 10, 0, 10]
+                        },
+                        {
+                            table: {
+                                widths: [120, "*", 200],
+                                body: [
+                                    [
+                                        { text: "DIMENSIÓN", fontSize: 7, bold: true, fillColor: "#1A407F", color: "#FFFFFF" },
+                                        { text: "DESCRIPCIÓN", fontSize: 7, bold: true, fillColor: "#1A407F", color: "#FFFFFF" },
+                                        { text: "EJEMPLO", fontSize: 7, bold: true, fillColor: "#1A407F", color: "#FFFFFF" }
+                                    ],
+                                    ...dimensionesForense.map((d, i) => [
+                                        { text: d.nombre, fontSize: 6, bold: true, color: "#B30000" },
+                                        { text: d.descripcion, fontSize: 6 },
+                                        { text: d.ejemplo, fontSize: 5, color: "#666666", fontFace: "Courier" }
+                                    ])
+                                ]
+                            },
+                            layout: { defaultBorder: true, padding: () => 2 }
+                        },
+                        {
+                            text: "DATOS DE PROVENIENCIA ACTUALES",
+                            bold: true,
+                            fontSize: 10,
+                            color: "#333333",
+                            margin: [0, 15, 0, 8]
+                        },
+                        {
+                            table: {
+                                widths: [150, "*", 100],
+                                body: [
+                                    [
+                                        { text: "CAMPO", fontSize: 6, bold: true, fillColor: "#333333", color: "#FFFFFF" },
+                                        { text: "VALOR ACTUAL", fontSize: 6, bold: true, fillColor: "#333333", color: "#FFFFFF" },
+                                        { text: "TIPO", fontSize: 6, bold: true, fillColor: "#333333", color: "#FFFFFF" }
+                                    ],
+                                    [
+                                        { text: "trace_id", fontSize: 6, color: "#888888" },
+                                        { text: metaForense.provenance.trace_id, fontSize: 6, color: "#1A407F", fontFace: "Courier" },
+                                        { text: "string", fontSize: 6, color: "#666666" }
+                                    ],
+                                    [
+                                        { text: "timestamp_iso", fontSize: 6, color: "#888888" },
+                                        { text: metaForense.provenance.timestamp_iso, fontSize: 6, fontFace: "Courier" },
+                                        { text: "ISO 8601 UTC", fontSize: 6, color: "#666666" }
+                                    ],
+                                    [
+                                        { text: "app_version", fontSize: 6, color: "#888888" },
+                                        { text: metaForense.provenance.app_version, fontSize: 6, fontFace: "Courier" },
+                                        { text: "semver", fontSize: 6, color: "#666666" }
+                                    ],
+                                    [
+                                        { text: "host_id", fontSize: 6, color: "#888888" },
+                                        { text: metaForense.provenance.host_id, fontSize: 6, fontFace: "Courier" },
+                                        { text: "hostname", fontSize: 6, color: "#666666" }
+                                    ],
+                                    [
+                                        { text: "total_ordenes", fontSize: 6, color: "#888888" },
+                                        { text: metaForense.statistics.total_ordenes.toLocaleString(), fontSize: 6, bold: true },
+                                        { text: "number", fontSize: 6, color: "#666666" }
+                                    ],
+                                    [
+                                        { text: "departamentos_activos", fontSize: 6, color: "#888888" },
+                                        { text: metaForense.dimensions.departamentos_activos.toString(), fontSize: 6 },
+                                        { text: "number", fontSize: 6, color: "#666666" }
+                                    ]
+                                ]
+                            },
+                            layout: { defaultBorder: true, padding: () => 3 },
+                            margin: [0, 0, 0, 15]
+                        },
+                        {
+                            text: "JSON SCHEMA · LOG FORENSE",
+                            bold: true,
+                            fontSize: 10,
+                            color: "#333333",
+                            margin: [0, 0, 0, 6]
+                        },
+                        {
+                            text: JSON.stringify({
+                                "@timestamp": metaForense.provenance.timestamp_iso,
+                                "trace_id": metaForense.provenance.trace_id,
+                                "client": { name: "MATAMOROS|VEOMAS", delivery_type: "EXPRES|NORMAL" },
+                                "location": { department: "DEPARTAMENTO_*", region_code: "NI-*" },
+                                "business_context": { gestion: "INSS|MINED|MINSA|COMP|...", order_id: "ORD-*" },
+                                "execution": { service: "order-dispatch-api", version: metaForense.provenance.app_version, duration_ms: "number", status_code: "number", error_code: "string|null" }
+                            }, null, 2),
+                            fontSize: 5,
+                            fontFace: "Courier",
+                            color: "#333333",
+                            backgroundColor: "#F5F5F5",
+                            margin: [0, 0, 0, 5]
+                        },
+                        {
+                            text: `Reporte generado: ${metaForense.provenance.timestamp_local} · Trace: ${metaForense.provenance.trace_id}`,
+                            fontSize: 6,
+                            color: "#888888",
+                            alignment: "center",
+                            margin: [0, 10, 0, 0]
+                        }
+                    ]
+                }];
+            })(),
+
             // Fin del contenido
         ],
     };
